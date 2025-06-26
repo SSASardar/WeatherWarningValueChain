@@ -11,6 +11,7 @@ The weather early warning value chain:
   4. Impact forecast;
   5. Warning;
   6. Decision.
+
 See their textbook "Towards the 'perfect' weather warning" edited by Brian Golding (DOI: 10.1007/978-3-030-98989-7)
 ____________
 
