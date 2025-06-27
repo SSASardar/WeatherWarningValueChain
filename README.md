@@ -21,4 +21,4 @@ Inherent to adaptive control systens is the need for feedback loops. Current (20
 
 The effects of changes in observations on components further down the chain is also an area where little research exists. By modelling these components with simple models, we hope to shed some light into this aspect. Whilst, for now, we don't want to optimise over the whole value chain (connecting 1 and 6), this can always be done.
 
- This work, project SMARTER, is funded by the Dutch Research Council (NWO) under the OTP 19959 grant.
+ This work is part of project SMARTER which is funded by the Dutch Research Council (NWO) under the OTP 19959 grant.
