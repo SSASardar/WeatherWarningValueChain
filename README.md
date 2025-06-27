@@ -2,7 +2,7 @@
 Git repository for studying different aspects of thew weather early warning value chain. 
 
 
-We follow the weather early warning value chain as described by WMO's HiWeather research effort.
+We follow the weather early warning value chain as described by WMO's HiWeather research group.
 ___________
 The weather early warning value chain:
   1. Observation;
