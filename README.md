@@ -15,7 +15,7 @@ The weather early warning value chain:
 See their textbook "Towards the 'perfect' weather warning" edited by Brian Golding (DOI: 10.1007/978-3-030-98989-7)
 ____________
 
-Specifically we want to look at how design and control adaptive scanning strategies for one meteorological radar in a larger network of radars. We will only look at a single weather phenomenon and only a limited number of impacts to ensure the tractability of the developed code, namely extreme rainfall with impacts on urban flooding, landslides, and agricultural protection. The results of this first work will drive the development of future work. 
+Specifically we want to look at how design and control adaptive scanning strategies for one meteorological radar in a larger network of radars. We will only look at a single weather phenomenon and only a limited number of impacts to ensure the tractability of the developed code, namely extreme rainfall with impacts on urban flooding, and agricultural protection. The results of this first work will drive the development of future work. 
 
 Inherent to adaptive control systens is the need for feedback loops. Current (2025) applications of adaptive weather systems optimise the observations on metrics on observations. We want to look further down the chain: can we optimise the observations using metrics on the hazard forecast?
 
