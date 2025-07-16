@@ -1,5 +1,5 @@
 # WeatherWarningValueChain
-Git repository for studying different aspects of thew weather early warning value chain. 
+Git repository for studying different aspects of the weather early warning value chain. 
 
 
 We follow the weather early warning value chain as described by WMO's HiWeather research group.
