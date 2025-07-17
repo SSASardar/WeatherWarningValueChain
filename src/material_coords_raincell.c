@@ -13,45 +13,52 @@
 #include "material_coords_raincell.h"
 #include <stdio.h>
 #include <math.h>
-
-
-// private function 
-
-static double size_stratiform = 15000;
-static double size_convective = 0.3*size_stratiform;
-static double a = -0.5*size_stratiform;
-static double c = 50000;
+#include <stdlib.h>
+#include "true_vertical_profile.h"
+#include "common.h"
 
 
 
-static double height_base = 1000;
-static double height_max_echo_top = 8000;
+
+// Structure of a raincell
+
+struct Raincell {
+	int id;
+	double radius_core;
+	double radius_stratiform;
+	double offset_centre_stratiform;
+	double top_height_stratiform;
+	double top_height_core;
+	double time;
+};
 
 
-static double height_brightband = 3500;
-static double width_brightband = 1000;
+Raincell* create_raincell(int id, double relative_size_core, double radius_stratiform, double relative_offset, double top_height_stratiform, double top_height_core, double time) {
 
-static double height_brightband_l = height_brightband-width_brightband;
-static double height_brightband_u = height_brightband+width_brightband;
+	Raincell* raincell = malloc(sizeof(Raincell));
+	raincell->id =  id;
+	raincell->radius_core = relative_size_core*radius_stratiform;
+	raincell->radius_stratiform = radius_stratiform;
+	raincell->offset_centre_stratiform = relative_offset*radius_stratiform;
+	raincell->top_height_stratiform = top_height_stratiform;
+	raincell->top_height_core = top_height_core;
+	raincell->time = time;
+	
+	return raincell;
 
-
-static double reflectivity_base = 30;
-static double reflectivity_max_echo_top = 20;
-
-
-static double reflectivity_brightband = 60;
-static double reflectivity_absdiff_brightband = 15;
-
-static double reflectivity_brightband_l = height_brightband-reflectivity_absdiff_brightband*2/3;
-static double reflectivity_brightband_u = height_brightband-reflectivity_absdiff_brightband/3;
-
-
- 
-
-// implementing a public function declared in material_coords_raincell.h file
-
-void internal_geometry_raincell(void){
-	printf("a cirlce inside another circle. one circle is the stratiform, the other is the convective core\n");
 }
+
+
+
+void print_raincell(const Raincell* raincell){
+	printf("Raincell %d has: \n    a core with radius %.2lf,\n    a stratiform area of radius %.2lf,\n    centred aroung point (0,%.2lf),\n    with heights of %.2lf and %.2lf of the core and stratiform areas\n\n",raincell->id, raincell->radius_core, raincell->radius_stratiform, -1*raincell->offset_centre_stratiform, raincell->top_height_core, raincell->top_height_stratiform);
+}
+
+void free_raincell(Raincell* raincell){
+	printf("I am destroying raincell %d\n", raincell->id);
+	free(raincell);
+	printf("destroyed!! >:)\n");
+}
+
 
 
