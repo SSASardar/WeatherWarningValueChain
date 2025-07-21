@@ -28,7 +28,14 @@ void print_raincell(const Raincell* raincell);
 
 void free_raincell(Raincell* raincell);
 
-
+// Getter functions
+int raincell_get_id(const Raincell* raincell);
+double raincell_get_radius_core(const Raincell* raincell);
+double raincell_get_radius_stratiform(const Raincell* raincell);
+double raincell_get_offset_centre_core(const Raincell* raincell);
+double raincell_get_top_height_stratiform(const Raincell* raincell);
+double raincell_get_top_height_core(const Raincell* raincell);
+double raincell_get_time(const Raincell* raincell);
 
 
 

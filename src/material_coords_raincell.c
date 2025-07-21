@@ -60,5 +60,33 @@ void free_raincell(Raincell* raincell){
 	printf("destroyed!! >:)\n");
 }
 
+// Getters for Raincell fields
+int raincell_get_id(const Raincell* raincell) {
+    return raincell->id;
+}
+
+double raincell_get_radius_core(const Raincell* raincell) {
+    return raincell->radius_core;
+}
+
+double raincell_get_radius_stratiform(const Raincell* raincell) {
+    return raincell->radius_stratiform;
+}
+
+double raincell_get_offset_centre_core(const Raincell* raincell) {
+    return raincell->offset_centre_core;
+}
+
+double raincell_get_top_height_stratiform(const Raincell* raincell) {
+    return raincell->top_height_stratiform;
+}
+
+double raincell_get_top_height_core(const Raincell* raincell) {
+    return raincell->top_height_core;
+}
+
+double raincell_get_time(const Raincell* raincell) {
+    return raincell->time;
+}
 
 
