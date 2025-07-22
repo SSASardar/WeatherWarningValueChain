@@ -39,11 +39,11 @@ Spatial_raincell* create_spatial_raincell(int id, double initial_x, double initi
 }
 
 
-void print_s_raincell(const Spatial_raincell* s_raincell, double time, const Raincell* raincell){
+void print_spatial_raincell(const Spatial_raincell* s_raincell, double time, const Raincell* raincell){
 
 	if(raincell != NULL && raincell_get_id(raincell)== s_raincell->id){
 	
-		printf("Raincell %d: \n is at point (x,y) = (%.2lf, %.2lf) \n and has cell heights of (h_stratiform, h_core) = (%.2lf, %.2lf)\n", s_raincell->id, s_raincell->initial_x + time* s_raincell->dx,s_raincell->initial_y + time* s_raincell->dy, raincell_get_top_height_stratiform(raincell), raincell_get_top_height_core(raincell));
+		printf("Raincell %d: \n is at point (x,y) = (%.2lf, %.2lf) \n at time %.2lf seconds =  %.2lf minutes = %.2lf hours \n and has cell heights of (h_stratiform, h_core) = (%.2lf, %.2lf)\n", s_raincell->id, s_raincell->initial_x + time* s_raincell->dx,s_raincell->initial_y + time* s_raincell->dy,time, time/60, time/3600, raincell_get_top_height_stratiform(raincell), raincell_get_top_height_core(raincell));
 	
 	}
 }

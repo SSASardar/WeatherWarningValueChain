@@ -16,7 +16,7 @@ typedef struct Spatial_raincell Spatial_raincell;
 // function declarations
 Spatial_raincell* create_spatial_raincell(int d, double intial_x, double intial_y, double velocity);
 
-void print_s_raincell(const Spatial_raincell* s_raincell, double time, const Raincell* raincell);
+void print_spatial_raincell(const Spatial_raincell* s_raincell, double time, const Raincell* raincell);
 
 void free_spatial_raincell(Spatial_raincell* s_raincell);
 
