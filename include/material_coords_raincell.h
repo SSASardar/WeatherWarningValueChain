@@ -20,8 +20,9 @@
 // Opaque definition of raincell structure
 typedef struct Raincell Raincell;
 
+	
+Raincell* create_raincell(int id, double relative_size_core, double radius_stratiform, double relative_offset, double top_height_stratiform,/*  double top_height_core,*/ double max_top_height_core, double onset_time_growth, double stop_time_growth, double onset_time_decay, double stop_time_decay);
 
-Raincell* create_raincell(int id, double relative_size_core, double radius_stratiform, double relative_offset, double top_height_stratiform, double top_height_core, double time);
 
 
 void print_raincell(const Raincell* raincell);
@@ -34,8 +35,8 @@ double raincell_get_radius_core(const Raincell* raincell);
 double raincell_get_radius_stratiform(const Raincell* raincell);
 double raincell_get_offset_centre_core(const Raincell* raincell);
 double raincell_get_top_height_stratiform(const Raincell* raincell);
-double raincell_get_top_height_core(const Raincell* raincell);
-double raincell_get_time(const Raincell* raincell);
+double raincell_get_top_height_core(const Raincell* raincell, double time);
+//double raincell_get_time(const Raincell* raincell);
 
 
 

@@ -28,12 +28,16 @@ struct Raincell {
 	double radius_stratiform;
 	double offset_centre_core;
 	double top_height_stratiform;
-	double top_height_core;
-	double time;
+	//double top_height_core;
+	double max_top_height_core;
+	double onset_time_growth;
+	double stop_time_growth;
+	double onset_time_decay;
+	double stop_time_decay;
 };
 
 
-Raincell* create_raincell(int id, double relative_size_core, double radius_stratiform, double relative_offset, double top_height_stratiform, double top_height_core, double time) {
+Raincell* create_raincell(int id, double relative_size_core, double radius_stratiform, double relative_offset, double top_height_stratiform,/*  double top_height_core,*/ double max_top_height_core, double onset_time_growth, double stop_time_growth, double onset_time_decay, double stop_time_decay) {
 
 	Raincell* raincell = malloc(sizeof(Raincell));
 	raincell->id =  id;
@@ -41,8 +45,12 @@ Raincell* create_raincell(int id, double relative_size_core, double radius_strat
 	raincell->radius_stratiform = radius_stratiform;
 	raincell->offset_centre_core = relative_offset*radius_stratiform;
 	raincell->top_height_stratiform = top_height_stratiform;
-	raincell->top_height_core = top_height_core;
-	raincell->time = time;
+	// raincell->top_height_core = top_height_core;
+	raincell-> max_top_height_core = max_top_height_core;
+	raincell->onset_time_growth = onset_time_growth;
+	raincell->stop_time_growth = stop_time_growth;
+	raincell->onset_time_decay = onset_time_decay;
+	raincell->stop_time_decay = stop_time_decay;
 	
 	return raincell;
 
@@ -51,7 +59,7 @@ Raincell* create_raincell(int id, double relative_size_core, double radius_strat
 
 
 void print_raincell(const Raincell* raincell){
-	printf("Raincell %d has: \n    a core with radius %.2lf,\n    a stratiform area of radius %.2lf,\n    centred aroung point (0,0) in material coordinates,\n    with heights of %.2lf and %.2lf of the core and stratiform areas\n\n",raincell->id, raincell->radius_core, raincell->radius_stratiform, raincell->top_height_core, raincell->top_height_stratiform);
+	printf("Raincell %d has: \n    a core with radius %.2lf centred around point (%.2lf, %.2lf),\n    a stratiform area of radius %.2lf,\n    centred aroung point (0,0) in material coordinates,\n    with maximum heights of %.2lf and %.2lf of the core and stratiform areas\n\n",raincell->id, raincell->radius_core, raincell->offset_centre_core, 0.00, raincell->radius_stratiform, raincell->max_top_height_core, raincell->top_height_stratiform);
 }
 
 void free_raincell(Raincell* raincell){
@@ -81,12 +89,33 @@ double raincell_get_top_height_stratiform(const Raincell* raincell) {
     return raincell->top_height_stratiform;
 }
 
-double raincell_get_top_height_core(const Raincell* raincell) {
-    return raincell->top_height_core;
+double raincell_get_top_height_core(const Raincell* raincell, double time) {
+    if(time<raincell->onset_time_growth || time>=raincell->stop_time_decay){
+		return raincell-> top_height_stratiform;
+	//	return 1.0;	
+	}
+	else if (time<raincell->stop_time_growth){
+	 return (raincell->max_top_height_core - raincell->top_height_stratiform)* ((time-raincell->onset_time_growth)/(raincell->stop_time_growth - raincell->onset_time_growth)) + raincell->top_height_stratiform;
+	//return 2.0;
+	}
+	else if (time<raincell->onset_time_decay){
+	return raincell->max_top_height_core;
+	//return 3.0;
+	}
+	else if (time<raincell->stop_time_decay){
+	 return raincell->max_top_height_core - ((time - raincell->stop_time_decay)/(raincell->onset_time_decay - raincell->stop_time_decay))*(raincell->max_top_height_core - raincell->top_height_stratiform);
+//	return 4.0;
+	}
+	else {
+	return -1.0;
+	}
+
+
+	//return raincell->top_height_core;
 }
 
-double raincell_get_time(const Raincell* raincell) {
+/* double raincell_get_time(const Raincell* raincell) {
     return raincell->time;
 }
-
+*/
 
