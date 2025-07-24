@@ -21,18 +21,18 @@ int main(void){
 	printf("Programme started.\n");
 
 
-	Raincell* raincell = create_raincell(1, 0.3, 15000.0, -0.5, 1000.0, 8000.0, 60.0*60.0, 180.0*60.0, 210.0*60.0, 170.0*60.0);
+	Raincell* raincell = create_raincell(1, 0.3, 15000.0, -0.5, 1000.0, 8000.0, 60.0*60.0, 180.0*60.0, 210.0*60.0, 270.0*60.0);
 	print_raincell(raincell);
 
 
 	Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
 
 
-
+/*
  // TESTING LOCATION AND HEIGHT OF THE SPATIAL RAINCELL
  
 	printf("\n+\n+\n+\n   START of simulation: I am in c-band range, not in X-band range   \n+\n+\n+\n");
-	print_spatial_raincell(s_raincell, 0, raincell);
+	print_spatial_raincell(s_raincell, 60*0, raincell);
 
 	printf("\n+\n+\n+\n   Start of growth, not in X-band FOV yet (at y = 80km)   \n+\n+\n+\n");
 	print_spatial_raincell(s_raincell, 60*60, raincell);
@@ -56,9 +56,17 @@ int main(void){
 	print_spatial_raincell(s_raincell, 60*330, raincell);
 
 	printf("\n+\n+\n+\n   END of simulation: I am in C-band range, not in X-band range   \n+\n+\n+\n");
-	print_spatial_raincell(s_raincell, 60*330, raincell);
+	print_spatial_raincell(s_raincell, 60*360, raincell);
+*/
 
 
+/*
+	// TESING THE HEIGHTS OF THE MATERIAL RAINCELL OVER TIME.
+	for (int i = 0; i < 75; i++){
+		double time1 = (double) i*5.0;
+		printf("%.2lf	_	_	%.2lf\n", time1 , raincell_get_top_height_core(raincell, time1*60));
+	}
+*/
 
 
 

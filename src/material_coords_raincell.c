@@ -90,21 +90,28 @@ double raincell_get_top_height_stratiform(const Raincell* raincell) {
 }
 
 double raincell_get_top_height_core(const Raincell* raincell, double time) {
-    if(time<raincell->onset_time_growth || time>=raincell->stop_time_decay){
+    if(time<=raincell->onset_time_growth){
 		return raincell-> top_height_stratiform;
 	//	return 1.0;	
 	}
-	else if (time<raincell->stop_time_growth){
+	else if (time<=raincell->stop_time_growth){
 	 return (raincell->max_top_height_core - raincell->top_height_stratiform)* ((time-raincell->onset_time_growth)/(raincell->stop_time_growth - raincell->onset_time_growth)) + raincell->top_height_stratiform;
 	//return 2.0;
 	}
-	else if (time<raincell->onset_time_decay){
+	else if (time<=raincell->onset_time_decay){
 	return raincell->max_top_height_core;
 	//return 3.0;
 	}
-	else if (time<raincell->stop_time_decay){
-	 return raincell->max_top_height_core - ((time - raincell->stop_time_decay)/(raincell->onset_time_decay - raincell->stop_time_decay))*(raincell->max_top_height_core - raincell->top_height_stratiform);
+	else if (time<=raincell->stop_time_decay){
+//	 return raincell->max_top_height_core - ((raincell->stop_time_decay-time)/(raincell->onset_time_decay - raincell->stop_time_decay))*(raincell->top_height_stratiform - raincell->max_top_height_core);
 //	return 4.0;
+	
+	return raincell->top_height_stratiform + (raincell->stop_time_decay - time)/(raincell->stop_time_decay - raincell->onset_time_decay)*(raincell->max_top_height_core - raincell->top_height_stratiform);
+
+	}
+	else if (time > raincell->stop_time_decay){
+	return raincell->top_height_stratiform;
+//	return 5.0;
 	}
 	else {
 	return -1.0;

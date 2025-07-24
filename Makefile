@@ -12,7 +12,7 @@ SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC_FILES))
 
 # Target executable
-TARGET = my_app
+TARGET = rain
 
 # Default target
 all: $(TARGET)
