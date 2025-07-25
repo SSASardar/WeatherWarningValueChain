@@ -18,15 +18,16 @@
 
 
 int main(void){
-	printf("Programme started.\n");
+	printf("Programme started.\n'\n");
 
 
-	Raincell* raincell = create_raincell(1, 0.3, 15000.0, -0.5, 1000.0, 8000.0, 60.0*60.0, 180.0*60.0, 210.0*60.0, 270.0*60.0);
+	Raincell* raincell = create_raincell(1, 0.4, 5000.0, -0.5, 1000.0, 8000.0, 60.0*60.0, 180.0*60.0, 210.0*60.0, 270.0*60.0);
 	print_raincell(raincell);
 
 
 	Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
 
+	print_path_spatial_raincell(s_raincell);
 
 /*
  // TESTING LOCATION AND HEIGHT OF THE SPATIAL RAINCELL
@@ -101,7 +102,7 @@ int main(void){
 
 //internal_geometry_raincell();
 
-printf("Programme finished.\n");
+printf("\nProgramme finished.\n\n");
 return 0;
 }
 
