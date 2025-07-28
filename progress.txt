@@ -1,0 +1,38 @@
++------------------------+----------------------------------+----------------------+
+|        Category        |                Task              |        Progress      |
++------------------------+----------------------------------+----------------------+
+| Model of rain          | Conceptual model                 | ************........ |
+|                        | 2D geometries (material)         | ******************** |
+|                        | Vertical information (material)  | ********............ |
+|                        | Lowest Z                         | ******.............. |
+|                        | Cell motion (spatial)            | ****************.... |
+| Model of radar         | Radar geometry (PPI)             | ********............ |
+|                        | Extra information RHI            | ****................ |
+|                        | Noise model                      | ***................. |
+|                        | Attenuation model                | **.................. |
+|                        | Clutter model                    | **.................. |
+|                        | Getting lowest Z                 | ******.............. |
+|                        | Measurement outputs              | ******.............. |
+| Meteorological product | Spatial interpolation            | ******.............. |
+|                        | Temporal interpolation           | ******.............. |
+|                        | Total rainfall accumulation      | ******.............. |
+|                        | (opt) Forecast                   | **.................. |
+| Hydrological product   | Spatial interpolation            | ***................. |
+|                        | Temporal interpolation           | **.................. |
+|                        | Entry rate of water into river   | **.................. |
+| Comparative measures   | True rainfall accumulation       | *****............... |
+|                        | True entry rate                  | .................... |
++------------------------+----------------------------------+----------------------+
+
+Legend:
+  ****................ (≤ 30%%): Idea
+  **********.......... (≤ 50%%): Functioning implementation
+  ****************.... (≤ 85%%): Test-ready, but can be improved
+  ******************** (100%%): Complete and satisfying
+
+
+
+Next 3 tasks to prioritise (as of 2025-07-28 10:08:55):
+  1. Implement the radar measurement model
+  2. Figure out a noise model
+  3. Figure out attenuation model

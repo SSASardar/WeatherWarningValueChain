@@ -69,6 +69,25 @@ else
 	./$$out_file
 endif
 
+
+# ---------------------------------
+# Project management progress report
+PROGRESS_SRC = project_management/current_progress.c
+PROGRESS_EXE = $(BUILD_DIR)/progress_report
+
+progress: $(PROGRESS_EXE)
+	@echo "📊 Generating progress report..."
+	./$(PROGRESS_EXE)
+
+$(PROGRESS_EXE): $(PROGRESS_SRC)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(PROGRESS_SRC) -o $(PROGRESS_EXE)
+
+
+
+
+
+
 # Clean everything
 clean:
 	rm -rf $(BUILD_DIR)/*.o $(TARGET) $(BUILD_DIR)/*
