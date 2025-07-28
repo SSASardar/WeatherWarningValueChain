@@ -32,22 +32,22 @@ void print_progress() {
             "Model of radar",
             {
                 {"Radar geometry (PPI)", 40},
-		{"Extra information RHI", 20},
-		{"Noise model", 15},
+		{"Extra information RHI", 35},
+		{"Noise model", 10},
 		{"Attenuation model",10},
-		{"Clutter model",10},
-		{"Getting lowest Z",30},
-		{"Measurement outputs",30},
+		{"Clutter model",5},
+		{"Getting lowest Z",10},
+		{"Measurement outputs",10},
             },
             7
         },
         {
             "Meteorological product",
             {
-                {"Spatial interpolation", 30},
+                {"Spatial interpolation", 40},
                 {"Temporal interpolation", 30},
 		{"Total rainfall accumulation",30},
-		{"(opt) Forecast", 10}
+		{"(opt) Forecast", 00}
             },
             4
         },
@@ -56,15 +56,15 @@ void print_progress() {
             {
                 {"Spatial interpolation", 15},
 		{"Temporal interpolation", 10},
-		{"Entry rate of water into river",10}
-	
+		{"Entry rate of water into river",10},
+		{"(opt) Forecast",0}
             },
-            3
+            4
         },
         {
             "Comparative measures",
             {
-                {"True rainfall accumulation", 25},
+                {"True rainfall accumulation", 15},
                 {"True entry rate", 0}
             },
             2
@@ -114,11 +114,11 @@ void print_progress() {
     fprintf(file, "%s", footer);
 	
     const char* legend =
-        "\nLegend:\n"
-        "  ****................ (≤ 30%%): Idea\n"
-        "  **********.......... (≤ 50%%): Functioning implementation\n"
-        "  ****************.... (≤ 85%%): Test-ready, but can be improved\n"
-        "  ******************** (100%%): Complete and satisfying\n";
+        "\n                                                         Legend:\n\n"
+        "                                                              ****................ (≤ 30%%): Idea\n"
+        "                                                              **********.......... (≤ 50%%): Functioning implementation\n"
+        "                                                              ****************.... (≤ 85%%): Test-ready, but can be improved\n"
+        "                                                              ******************** (100%%): Complete and satisfying\n";
 
     printf("\n\n\n%s\n\n\n", legend);
     fprintf(file, "%s", legend);
@@ -135,9 +135,9 @@ void print_progress() {
     // Manual: Next 3 tasks to do
     // -----------------------------
     const char* next_tasks[3] = {
-        "Implement the radar measurement model",
-        "Figure out a noise model",
-        "Figure out attenuation model"
+        "Implement height and implement and derive core or no core of polar grid (spatial relative to material)",
+        "VPR function with radar effects",
+        "Derive equation for time dependent VPR?"
     };
 
     fprintf(file, "\n\n\nNext 3 tasks to prioritise (as of %s):\n", time_str);

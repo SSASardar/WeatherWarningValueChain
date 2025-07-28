@@ -7,32 +7,34 @@
 |                        | Lowest Z                         | ******.............. |
 |                        | Cell motion (spatial)            | ****************.... |
 | Model of radar         | Radar geometry (PPI)             | ********............ |
-|                        | Extra information RHI            | ****................ |
-|                        | Noise model                      | ***................. |
+|                        | Extra information RHI            | *******............. |
+|                        | Noise model                      | **.................. |
 |                        | Attenuation model                | **.................. |
-|                        | Clutter model                    | **.................. |
-|                        | Getting lowest Z                 | ******.............. |
-|                        | Measurement outputs              | ******.............. |
-| Meteorological product | Spatial interpolation            | ******.............. |
+|                        | Clutter model                    | *................... |
+|                        | Getting lowest Z                 | **.................. |
+|                        | Measurement outputs              | **.................. |
+| Meteorological product | Spatial interpolation            | ********............ |
 |                        | Temporal interpolation           | ******.............. |
 |                        | Total rainfall accumulation      | ******.............. |
-|                        | (opt) Forecast                   | **.................. |
+|                        | (opt) Forecast                   | .................... |
 | Hydrological product   | Spatial interpolation            | ***................. |
 |                        | Temporal interpolation           | **.................. |
 |                        | Entry rate of water into river   | **.................. |
-| Comparative measures   | True rainfall accumulation       | *****............... |
+|                        | (opt) Forecast                   | .................... |
+| Comparative measures   | True rainfall accumulation       | ***................. |
 |                        | True entry rate                  | .................... |
 +------------------------+----------------------------------+----------------------+
 
-Legend:
-  ****................ (≤ 30%%): Idea
-  **********.......... (≤ 50%%): Functioning implementation
-  ****************.... (≤ 85%%): Test-ready, but can be improved
-  ******************** (100%%): Complete and satisfying
+                                                         Legend:
+
+                                                              ****................ (≤ 30%%): Idea
+                                                              **********.......... (≤ 50%%): Functioning implementation
+                                                              ****************.... (≤ 85%%): Test-ready, but can be improved
+                                                              ******************** (100%%): Complete and satisfying
 
 
 
-Next 3 tasks to prioritise (as of 2025-07-28 10:08:55):
-  1. Implement the radar measurement model
-  2. Figure out a noise model
-  3. Figure out attenuation model
+Next 3 tasks to prioritise (as of 2025-07-28 16:02:35):
+  1. Implement height and implement and derive core or no core of polar grid (spatial relative to material)
+  2. VPR function with radar effects
+  3. Derive equation for time dependent VPR?
