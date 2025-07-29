@@ -61,22 +61,6 @@ int main(void){
 */
 
 
-/*
-	// TESING THE HEIGHTS OF THE MATERIAL RAINCELL OVER TIME.
-	for (int i = 0; i < 75; i++){
-		double time1 = (double) i*5.0;
-		printf("%.2lf	_	_	%.2lf\n", time1 , raincell_get_top_height_core(raincell, time1*60));
-	}
-*/
-
-
-
-
-// TESTING height of core in material raincell:
-
-
-
-
 
 
 
@@ -100,7 +84,6 @@ int main(void){
 
 */
 
-//internal_geometry_raincell();
 
 printf("\nProgramme finished.\n\n");
 return 0;

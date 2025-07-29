@@ -74,3 +74,10 @@ void free_spatial_raincell(Spatial_raincell* s_raincell){
 	printf("I just obliterated (freed) spatial raincell %d\n\n", id_d);
 }
 
+void get_position_raincell(double time, const Spatial_raincell* cell, double *x_out, double *y_out) {
+    if (cell && x_out && y_out) {
+        *x_out = cell->initial_x + time * cell->dx;
+        *y_out = cell->initial_y + time * cell->dy;
+    }
+}
+

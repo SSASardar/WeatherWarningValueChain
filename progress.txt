@@ -34,7 +34,7 @@
 
 
 
-Next 3 tasks to prioritise (as of 2025-07-28 16:02:35):
+Next 3 tasks to prioritise (as of 2025-07-29 09:43:10):
   1. Implement height and implement and derive core or no core of polar grid (spatial relative to material)
   2. VPR function with radar effects
   3. Derive equation for time dependent VPR?

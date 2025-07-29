@@ -22,7 +22,7 @@ void print_path_spatial_raincell(const Spatial_raincell* s_raincell);
 
 void free_spatial_raincell(Spatial_raincell* s_raincell);
 
-
+void get_position_raincell(double time, const Spatial_raincell* s_raincell, double *x_out, double *y_out);
 
 
 

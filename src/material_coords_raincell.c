@@ -60,7 +60,6 @@ Raincell* create_raincell(int id, double relative_size_core, double radius_strat
 
 
 void print_raincell(const Raincell* raincell){
-//	printf("Raincell %d has: \n    a core with radius %.2lf centred around point (%.2lf, %.2lf),\n    a stratiform area of radius %.2lf,\n  centred aroung point (0,0) in material coordinates,\n    with maximum heights of %.2lf and %.2lf of the core and stratiform areas\n\n",raincell->id, raincell->radius_core, raincell->offset_centre_core, 0.00, raincell->radius_stratiform, raincell->max_top_height_core, raincell->top_height_stratiform);
 
 printf("\n\nRaincell %d: \n 	Centre: 	(0,0)\n 	Radius:		%.2lf\n ", raincell->id, raincell->radius_stratiform);
 printf("\nIts core has: \n 	Centre: 	(%.2lf, %.2lf)\n 	Radius: 	%.2lf\n", raincell->offset_centre_core, 0.00, raincell->radius_core);
@@ -72,9 +71,8 @@ printf("\n\nThe phases of the raincell development happen at the following times
 
 void free_raincell(Raincell* raincell){
 	int id_d = raincell->id;
-	//printf("I am destroying raincell %d\n", id_d);
 	free(raincell);
-	printf("I just obliterated (freed) raincell %d\n\n", id_d);
+	printf("I just freed raincell %d\n\n", id_d);
 }
 
 // Getters for Raincell fields
