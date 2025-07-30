@@ -15,6 +15,8 @@
 #include "material_coords_raincell.h"
 #include "true_vertical_profile.h"
 #include "spatial_coords_raincell.h"
+#include <plplot/plplot.h>
+#include "plot.h"
 
 
 int main(void){
@@ -83,6 +85,21 @@ int main(void){
     	}
 
 */
+
+
+
+    setup_plot("output.ps");  // Sets up PDF output
+
+    plot_example();            // Actual plotting
+
+    finalize_plot();           // Closes the PDF cleanly
+
+
+
+
+
+
+
 
 
 printf("\nProgramme finished.\n\n");

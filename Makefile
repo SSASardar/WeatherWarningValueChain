@@ -1,11 +1,15 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Iinclude
+CFLAGS = -Wall -Wextra -std=c11 -I/Users/ssasardar/opt/anaconda3/envs/cDev/include -Iinclude
+LDFLAGS = -L/Users/ssasardar/opt/anaconda3/envs/cDev/lib -lplplot -lm -Wl,-rpath,/Users/ssasardar/opt/anaconda3/envs/cDev/lib
+
 
 # Directories
 SRC_DIR = src
 BUILD_DIR = build
 TEST_DIR = tests
+
+
 
 # Source files and object files
 SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
@@ -19,7 +23,7 @@ all: $(TARGET)
 
 # Linking the final executable
 $(TARGET): $(OBJ_FILES)
-	$(CC) $(OBJ_FILES) -o $@
+	$(CC) $(OBJ_FILES) -o $@ $(LDFLAGS)
 
 # Compile each .c file in src/ to build/*.o
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
@@ -41,7 +45,7 @@ tests: $(wildcard $(TEST_DIR)/*.c)
 	@for test_src in $^; do \
 		test_exe="$(BUILD_DIR)/$$(basename $$test_src .c)"; \
 		echo "🔧 Building $$test_src"; \
-		$(CC) $(CFLAGS) $$test_src $(SRC_NO_MAIN) -o $$test_exe || exit 1; \
+		$(CC) $(CFLAGS) $$test_src $(SRC_NO_MAIN) -o $$test_exe $(LDFLAGS)|| exit 1; \
 		echo "✅ Running $$test_exe"; \
 		./$$test_exe || exit 1; \
 	done
@@ -64,7 +68,7 @@ else
 		echo "❌ Test $$src_file not found"; exit 1; \
 	fi; \
 	echo "🔧 Building $$src_file"; \
-	$(CC) $(CFLAGS) $$src_file $(SRC_NO_MAIN) -o $$out_file && \
+	$(CC) $(CFLAGS) $$src_file $(SRC_NO_MAIN) -o $$out_file $(LDFLAGS) && \
 	echo "✅ Running $$out_file"; \
 	./$$out_file
 endif
@@ -90,6 +94,6 @@ $(PROGRESS_EXE): $(PROGRESS_SRC)
 
 # Clean everything
 clean:
-	rm -rf $(BUILD_DIR)/*.o $(TARGET) $(BUILD_DIR)/*
+	rm -rf $(BUILD_DIR)/* $(TARGET)
 
 .PHONY: all clean run tests test

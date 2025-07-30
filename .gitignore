@@ -3,3 +3,4 @@ build/
 Doxyfile
 docs/
 *.DS_Store
+*.ps

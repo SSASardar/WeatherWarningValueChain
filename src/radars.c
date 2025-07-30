@@ -144,27 +144,59 @@ Polar_box* create_polar_box(double time, const Spatial_raincell* s_raincell, con
 }
 
 
-void print_polar_grid(struct Polar_box* box) {
+
+int get_radar_id_for_polar_box(const struct Polar_box* box) {
+    return box->radar_id;
+}
+
+double get_min_range(const struct Polar_box* box) {
+    return box->min_range;
+}
+
+double get_max_range(const struct Polar_box* box) {
+    return box->max_range;
+}
+
+double get_min_angle(const struct Polar_box* box) {
+    return box->min_angle;
+}
+
+double get_max_angle(const struct Polar_box* box) {
+    return box->max_angle;
+}
+
+double get_num_ranges(const struct Polar_box* box) {
+    return box->num_ranges;
+}
+
+double get_num_angles(const struct Polar_box* box) {
+    return box->num_angles;
+}
+
+
+
+
+void print_polar_grid(const Polar_box* box) {
     int i;
     int width = 20;  // Width of the angle line
     int num_lines = 5;
 
     // Print radar info
-    printf("Radar ID      : %d\n", box.radar_id);
-    printf("Num of Angles : %.0f\n", box.num_angles);
-    printf("Num of Ranges : %.0f\n", box.num_ranges);
+    printf("Radar ID      : %d\n", get_radar_id_for_polar_box(box));
+    printf("Num of Angles : %.0f\n", get_num_angles(box));
+    printf("Num of Ranges : %.0f\n", get_num_ranges(box));
     printf("\n");
 
     // Print angle header
     printf("Max_angle (%.2f°)%*sMin_angle (%.2f°)\n", 
-           box.max_angle, width, "", box.min_angle);
+           get_max_angle(box), width, "", get_min_angle(box));
 
-    printf("%.*s| max_range (%.2f)\n", width, "________________________________________", box.max_range);
+    printf("%.*s| max_range (%.2f)\n", width, "________________________________________", get_max_range(box));
     // Print grid lines
     for (i = 0; i < num_lines; ++i) {
         printf("%.*s|\n", width, "________________________________________");
     }
 
     // Print bottom with range labels
-    printf("%.*s| min_range (%.2f)\n", width, "________________________________________", box.min_range);
+    printf("%.*s| min_range (%.2f)\n", width, "________________________________________", get_min_range(box));
 }

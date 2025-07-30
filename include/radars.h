@@ -38,4 +38,17 @@ int get_radar_id(const Radar* radar);
 
 void print_polar_grid(const Polar_box* polar_box);
 
+// Getter function declarations
+int get_radar_id_for_polar_box(const struct Polar_box* box);
+double get_min_range(const struct Polar_box* box);
+double get_max_range(const struct Polar_box* box);
+double get_min_angle(const struct Polar_box* box);
+double get_max_angle(const struct Polar_box* box);
+double get_num_ranges(const struct Polar_box* box);
+double get_num_angles(const struct Polar_box* box);
+
+
+
+
+
 #endif /* RADARS_H */
