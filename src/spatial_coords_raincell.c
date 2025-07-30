@@ -11,7 +11,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "material_coords_raincell.h"
-
+#include "common.h"
 
 
 
@@ -26,6 +26,9 @@ struct Spatial_raincell {
 	double dx;
 	double dy;
 };
+
+
+
 
 Spatial_raincell* create_spatial_raincell(int id, double initial_x, double initial_y, double velocity) {
 	Spatial_raincell* s_raincell = malloc(sizeof(Spatial_raincell));
@@ -74,10 +77,36 @@ void free_spatial_raincell(Spatial_raincell* s_raincell){
 	printf("I just obliterated (freed) spatial raincell %d\n\n", id_d);
 }
 
-void get_position_raincell(double time, const Spatial_raincell* cell, double *x_out, double *y_out) {
-    if (cell && x_out && y_out) {
-        *x_out = cell->initial_x + time * cell->dx;
-        *y_out = cell->initial_y + time * cell->dy;
+Point* get_position_raincell(double time, const Spatial_raincell* cell) {
+	Point* point = malloc(sizeof(Point));
+    if (cell) {
+        point->x = cell->initial_x + time * cell->dx;
+        point->y = cell->initial_y + time * cell->dy;
     }
+    return point;
 }
 
+
+Bounding_box* create_BoundingBox_for_s_raincell(const Spatial_raincell* s_raincell, double time, const Raincell* raincell){
+	Bounding_box* bounding_box = malloc(sizeof(Bounding_box));
+	double radius_stratiform = raincell_get_radius_stratiform(raincell);
+	Point* centre = get_position_raincell(time, s_raincell);
+	    // Build corners based on center and radius (assuming square bounding box)
+    bounding_box->topLeft.x = centre->x - radius_stratiform;
+    bounding_box->topLeft.y = centre->y + radius_stratiform;
+
+    bounding_box->topRight.x = centre->x + radius_stratiform;
+    bounding_box->topRight.y = centre->y + radius_stratiform;
+
+    bounding_box->bottomLeft.x = centre->x - radius_stratiform;
+    bounding_box->bottomLeft.y = centre->y - radius_stratiform;
+
+    bounding_box->bottomRight.x = centre->x + radius_stratiform;
+    bounding_box->bottomRight.y = centre->y - radius_stratiform;
+
+    // Clean up the allocated center point if you don't need it anymore
+    free(centre);
+
+
+    return bounding_box;
+}

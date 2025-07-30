@@ -31,8 +31,8 @@ struct Radar {
 
 struct Polar_box {
 	int radar_id;
-	double min_range;
-	double max_range;
+	double min_range_gate;
+	double max_range_gate;
 	double min_angle;
 	double max_angle;
 	double num_ranges;
@@ -85,11 +85,13 @@ void print_radar_specs(const Radar* radar) {
 
 
 
-void get_position_radar(const Radar* radar, double *x_out, double *y_out){
-	if (radar && x_out && y_out) {
-		*x_out = radar->x;
-		*y_out = radar->y;
+Point* get_position_radar(const Radar* radar){
+	Point* point = malloc(sizeof(Point));
+	if (radar) {
+		point->x = radar->x;
+		point->y = radar->y;
 	}	
+	return point;
 }
 
 double get_range_res_radar(const Radar* radar){
@@ -104,16 +106,27 @@ int get_radar_id(const Radar* radar){
 	return radar->id;
 }
 
+double get_max_range_radar(const Radar* radar){
+	return radar->maximum_range;
+}	
+
+
+const char* get_frequency(const Radar* r) {
+    return r->frequency;
+}
+
+const char* get_scanning_mode(const Radar* r) {
+    return r->scanning_mode;
+}
+
 // Figuring out the number of range gates 
 Polar_box* create_polar_box(double time, const Spatial_raincell* s_raincell, const Radar* radar, const Raincell* raincell){
-	double centre_x,centre_y;
-	get_position_raincell(time, s_raincell, &centre_x, &centre_y);
+    	Point* centre = get_position_raincell(time, s_raincell);
 
-	double radar_x, radar_y;
-	get_position_radar(radar, &radar_x, &radar_y);
+	Point* radar_point = get_position_radar(radar);
 	
-	double diff_x = centre_x-radar_x;
-	double diff_y = centre_y-radar_y;
+	double diff_x = centre->x-radar_point->x;
+	double diff_y = centre->y-radar_point->y;
 
 	double dist = sqrt((diff_x)*(diff_x) + (diff_y)*(diff_y) );
 	double radius_stratiform = raincell_get_radius_stratiform(raincell);
@@ -124,21 +137,37 @@ Polar_box* create_polar_box(double time, const Spatial_raincell* s_raincell, con
 	if (angle<0){
 		angle += 2*M_PI;
 	}
-	
+
+	// Convert angle from radians to degrees
+	angle = angle * RAD2DEG;
+
 	double del_angle = atan2(radius_stratiform,dist);
-	double angular_resolution = get_angular_res_radar(radar);
 	
+	
+	// Convert del_angle from radians to degrees
+	del_angle = del_angle * RAD2DEG;
+	
+	double angular_resolution = get_angular_res_radar(radar); // is already in degreees.
+	
+
+
+
+
 	Polar_box* polar_box = malloc(sizeof(Polar_box));
 
 	polar_box->radar_id = get_radar_id(radar);
-	polar_box->min_range = floor((dist-radius_stratiform)/range_resolution);
-	polar_box->max_range = ceil((dist+radius_stratiform)/range_resolution);
+	polar_box->min_range_gate = floor((dist-radius_stratiform)/range_resolution);
+	//polar_box->min_range = floor((dist-radius_stratiform));
+	polar_box->max_range_gate = ceil((dist+radius_stratiform)/range_resolution);
+	//polar_box->max_range = ceil((dist+radius_stratiform));
 
 	polar_box->min_angle = floor((angle-del_angle)/angular_resolution);
 	polar_box->max_angle = ceil((angle+del_angle)/angular_resolution);
 	
-	polar_box->num_ranges = polar_box->max_range - polar_box->min_range;
+	polar_box->num_ranges = polar_box->max_range_gate - polar_box->min_range_gate;
 	polar_box->num_angles = polar_box->max_angle - polar_box->min_angle;
+	free(centre);
+	free(radar_point);
 
 	return polar_box;
 }
@@ -149,12 +178,12 @@ int get_radar_id_for_polar_box(const struct Polar_box* box) {
     return box->radar_id;
 }
 
-double get_min_range(const struct Polar_box* box) {
-    return box->min_range;
+double get_min_range_gate(const struct Polar_box* box) {
+    return box->min_range_gate;
 }
 
-double get_max_range(const struct Polar_box* box) {
-    return box->max_range;
+double get_max_range_gate(const struct Polar_box* box) {
+    return box->max_range_gate;
 }
 
 double get_min_angle(const struct Polar_box* box) {
@@ -173,30 +202,86 @@ double get_num_angles(const struct Polar_box* box) {
     return box->num_angles;
 }
 
+// Function to find Radar by ID              
+const Radar* find_radar_by_id(const Polar_box* box, const Radar** radars, int num_radars) {
+    for (int i = 0; i < num_radars; ++i) {   
+        if (radars[i]->id == get_radar_id_for_polar_box(box)) {
+            return radars[i];
+        }
+    }
+    return NULL; // Not found
 
+}
 
+void print_polar_grid(const Polar_box* box, const Radar** radars, int num_radars) {
 
-void print_polar_grid(const Polar_box* box) {
-    int i;
-    int width = 20;  // Width of the angle line
-    int num_lines = 5;
+  const Radar* found_radar = find_radar_by_id(box, radars, num_radars);
 
-    // Print radar info
+    // Print polar box info
     printf("Radar ID      : %d\n", get_radar_id_for_polar_box(box));
     printf("Num of Angles : %.0f\n", get_num_angles(box));
     printf("Num of Ranges : %.0f\n", get_num_ranges(box));
+    printf("Between angles: [%.0f, %.0f]\n", get_max_angle(box), get_min_angle(box));
+    printf("Between ranges: [%.0f, %.0f]\n", get_min_range_gate(box)*get_range_res_radar(found_radar), get_max_range_gate(box)*get_range_res_radar(found_radar));
     printf("\n");
 
-    // Print angle header
-    printf("Max_angle (%.2f°)%*sMin_angle (%.2f°)\n", 
-           get_max_angle(box), width, "", get_min_angle(box));
-
-    printf("%.*s| max_range (%.2f)\n", width, "________________________________________", get_max_range(box));
-    // Print grid lines
-    for (i = 0; i < num_lines; ++i) {
-        printf("%.*s|\n", width, "________________________________________");
-    }
-
-    // Print bottom with range labels
-    printf("%.*s| min_range (%.2f)\n", width, "________________________________________", get_min_range(box));
 }
+
+Bounding_box* create_bounding_box_for_polar_box(const Polar_box* p_box, const Radar** radars, int num_radars){
+const Radar* found_radar = find_radar_by_id(p_box, radars, num_radars);
+
+double rmin = get_min_range_gate(p_box) * get_range_res_radar(found_radar);
+double rmax = get_max_range_gate(p_box) * get_range_res_radar(found_radar);
+double anglemin = get_min_angle(p_box) * DEG2RAD;
+double anglemax = get_max_angle(p_box) * DEG2RAD;
+double anglemid = (anglemin + anglemax) / 2;
+
+double xs[5] = {
+    rmax * cos(anglemin),
+    rmin * cos(anglemin),
+    rmax * cos(anglemax),
+    rmin * cos(anglemax),
+    rmax * cos(anglemid)
+};
+
+double ys[5] = {
+    rmax * sin(anglemin),
+    rmin * sin(anglemin),
+    rmax * sin(anglemax),
+    rmin * sin(anglemax),
+    rmax * sin(anglemid)
+};
+
+
+double xmin = xs[0], xmax = xs[0];
+double ymin = ys[0], ymax = ys[0];
+
+for (int i = 1; i < 5; ++i) {
+    if (xs[i] < xmin) xmin = xs[i];
+    if (xs[i] > xmax) xmax = xs[i];
+    if (ys[i] < ymin) ymin = ys[i];
+    if (ys[i] > ymax) ymax = ys[i];
+}
+
+Point* pos_radar = get_position_radar(found_radar);
+
+
+// Allocate and fill the bounding box
+Bounding_box* bbox = malloc(sizeof(Bounding_box));
+bbox->topLeft.x = xmin+pos_radar->x;
+bbox->topLeft.y = ymax+pos_radar->y;
+
+bbox->topRight.x = xmax+pos_radar->x;
+bbox->topRight.y = ymax+pos_radar->y;
+
+bbox->bottomLeft.x = xmin+pos_radar->x;
+bbox->bottomLeft.y = ymin+pos_radar->y;
+
+bbox->bottomRight.x = xmax+pos_radar->x;
+bbox->bottomRight.y = ymin+pos_radar->y;
+
+return bbox;
+
+
+}
+
