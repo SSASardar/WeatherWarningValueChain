@@ -70,7 +70,7 @@ Radar* create_radar(int id, const char* frequency, const char* scanning_mode,
 // To check the radar setup
 void print_radar_specs(const Radar* radar) {
     if (radar == NULL) {
-        printf("Radar is NULL.\n");
+        printf("Radar is not found (pointing to NULL).\n");
         return;
     }
 
@@ -121,7 +121,13 @@ const char* get_scanning_mode(const Radar* r) {
 
 // Figuring out the number of range gates 
 Polar_box* create_polar_box(double time, const Spatial_raincell* s_raincell, const Radar* radar, const Raincell* raincell){
-    	Point* centre = get_position_raincell(time, s_raincell);
+    	
+	if (strcmp(get_scanning_mode(radar),"PPI")!=0) {
+		printf("create_polar_box:\nAt simulation time %.2lf you are trying to create a polar box for a %s\nPolar box NOT made: assigning NULL\n\n", time, get_scanning_mode(radar));
+		return NULL;
+	}
+	
+	Point* centre = get_position_raincell(time, s_raincell);
 
 	Point* radar_point = get_position_radar(radar);
 	
@@ -209,12 +215,13 @@ const Radar* find_radar_by_id(const Polar_box* box, const Radar** radars, int nu
             return radars[i];
         }
     }
+    printf("find_radar_by_id()\nRadar with id %d was not found. found_radar is allocated to NULL\n\n", get_radar_id_for_polar_box(box));
     return NULL; // Not found
 
 }
 
 void print_polar_grid(const Polar_box* box, const Radar** radars, int num_radars) {
-
+if(box==NULL){printf("polar box not found (points to NULL) in print_polar_grid function.\n\n");}
   const Radar* found_radar = find_radar_by_id(box, radars, num_radars);
 
     // Print polar box info
@@ -228,7 +235,9 @@ void print_polar_grid(const Polar_box* box, const Radar** radars, int num_radars
 }
 
 Bounding_box* create_bounding_box_for_polar_box(const Polar_box* p_box, const Radar** radars, int num_radars){
-const Radar* found_radar = find_radar_by_id(p_box, radars, num_radars);
+if(p_box==NULL){printf("create_bounding+box_for_polar_plot\n You are trying to create a bounding box for a polar box which is not defined (points to NULL)\n The bounding box will be assigned NULL\n\n");return NULL;}
+	
+	const Radar* found_radar = find_radar_by_id(p_box, radars, num_radars);
 
 double rmin = get_min_range_gate(p_box) * get_range_res_radar(found_radar);
 double rmax = get_max_range_gate(p_box) * get_range_res_radar(found_radar);

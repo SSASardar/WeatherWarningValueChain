@@ -8,8 +8,8 @@
 
 int main() {
     // Create radar list
-    Radar* radar1 = create_radar(1, "C", "RHI", 0.0, 0.0, 100.0, 250000.0, 250.0, 1.0);
-    Radar* radar2 = create_radar(2, "X", "RHI", -50000.0, 50000.0, 60.0, 50000.0, 50.0, 1.0);
+    Radar* radar1 = create_radar(1, "C", "PPI", 0.0, 0.0, 100.0, 250000.0, 250.0, 1.0);
+    Radar* radar2 = create_radar(2, "X", "PPI", -50000.0, 50000.0, 60.0, 50000.0, 50.0, 1.0);
 
 const Radar* radars[] = { radar1, radar2 };
     int num_radars = sizeof(radars) / sizeof(radars[0]);

@@ -30,7 +30,7 @@ Point get_bounding_box_top_right(const Bounding_box* box);
 Point get_bounding_box_bottom_left(const Bounding_box* box);
 Point get_bounding_box_bottom_right(const Bounding_box* box);
 
-static int is_point_inside_box(const Point* p, const Bounding_box* box); 
+int is_point_inside_box(const Point* p, const Bounding_box* box); 
 
 int does_box1_include_box2(const Bounding_box* box1, const Bounding_box* box2);
 

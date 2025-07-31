@@ -2,7 +2,7 @@
 #include <time.h>
 
 #define MAX_TASKS 10
-#define MAX_CATEGORIES 5
+#define MAX_CATEGORIES 7
 
 typedef struct {
     const char* task;
@@ -20,43 +20,65 @@ void print_progress() {
         {
             "Model of rain",
             {
-                {"Conceptual model",60},
-		{"2D geometries (material)", 100},
-		{"Vertical information (material)",40},
-		{"Lowest Z",30},
-                {"Cell motion (spatial)", 80},
+                {"Holistic overview",60},
+		{"Material and spatial descriptions", 80},
+		{"Development convective core",20},
+		{"Dynamic equil. VPR", 15},
+		{"What is the ground truth?",20}
             },
             5
         },
         {
             "Model of radar",
             {
-                {"Radar geometry (PPI)", 40},
-		{"Extra information RHI", 35},
-		{"Noise model", 10},
-		{"Attenuation model",10},
+                {"Radar geometry (PPI)", 50},
+		{"Radar geometry (RHI)", 10},
+		{"Noise model", 5},
+		{"Attenuation model",5},
 		{"Clutter model",5},
-		{"Getting lowest Z",10},
-		{"Measurement outputs",10},
+		{"Getting lowest Z",5},
+		{"Measurement outputs",15}
             },
             7
         },
+	{
+		"Radar config. & contr.",
+		{
+			{"Reading in commands",80},
+			{"Validating commands",70},
+			{"Checking for new files",60},
+			{"Saving radar outputs",0},
+			{"Generating command list",0}
+		},
+		5
+	},
+	{
+		"Processing unit",
+		{
+			{"Cartesian spatial interpolation", 15},
+			{"Temporal interpolation", 5},
+			{"PPI to rainfall rate", 20},
+			{"PPI-PPI to rainfall rate", 10},
+			{"PPI-PPI-RHI to rainfall rate", 5},
+			{"PPI-RHI to rainfall rate", 5},
+
+		},
+		6
+	},
         {
             "Meteorological product",
             {
-                {"Spatial interpolation", 40},
-                {"Temporal interpolation", 30},
 		{"Total rainfall accumulation",30},
-		{"(opt) Forecast", 00}
+		{"True rainfall accumulation",5},
+		{"(opt) Forecast", 0}
             },
-            4
+            3
         },
         {
             "Hydrological product",
             {
-                {"Spatial interpolation", 15},
-		{"Temporal interpolation", 10},
 		{"Entry rate of water into river",10},
+		{"True rainfall accumulation",5},
 		{"(opt) Forecast",0}
             },
             4
@@ -64,8 +86,8 @@ void print_progress() {
         {
             "Comparative measures",
             {
-                {"True rainfall accumulation", 15},
-                {"True entry rate", 0}
+                {"Rainfall acc. map + MSE/Bias", 15},
+                {"Entry rate curve + MSE/Bias", 0}
             },
             2
         }
@@ -135,8 +157,8 @@ void print_progress() {
     // Manual: Next 3 tasks to do
     // -----------------------------
     const char* next_tasks[3] = {
-        "Implement height and implement and derive core or no core of polar grid (spatial relative to material)",
-        "VPR function with radar effects",
+        "Execute command function in control_centre.c file, making and setting a polar grid",
+        "output radar files to a directory",
         "Derive equation for time dependent VPR?"
     };
 

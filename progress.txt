@@ -1,28 +1,38 @@
 +------------------------+----------------------------------+----------------------+
 |        Category        |                Task              |        Progress      |
 +------------------------+----------------------------------+----------------------+
-| Model of rain          | Conceptual model                 | ************........ |
-|                        | 2D geometries (material)         | ******************** |
-|                        | Vertical information (material)  | ********............ |
-|                        | Lowest Z                         | ******.............. |
-|                        | Cell motion (spatial)            | ****************.... |
-| Model of radar         | Radar geometry (PPI)             | ********............ |
-|                        | Extra information RHI            | *******............. |
-|                        | Noise model                      | **.................. |
-|                        | Attenuation model                | **.................. |
+| Model of rain          | Holistic overview                | ************........ |
+|                        | Material and spatial descriptions | ****************.... |
+|                        | Development convective core      | ****................ |
+|                        | Dynamic equil. VPR               | ***................. |
+|                        | What is the ground truth?        | ****................ |
+| Model of radar         | Radar geometry (PPI)             | **********.......... |
+|                        | Radar geometry (RHI)             | **.................. |
+|                        | Noise model                      | *................... |
+|                        | Attenuation model                | *................... |
 |                        | Clutter model                    | *................... |
-|                        | Getting lowest Z                 | **.................. |
-|                        | Measurement outputs              | **.................. |
-| Meteorological product | Spatial interpolation            | ********............ |
-|                        | Temporal interpolation           | ******.............. |
-|                        | Total rainfall accumulation      | ******.............. |
+|                        | Getting lowest Z                 | *................... |
+|                        | Measurement outputs              | ***................. |
+| Radar config. & contr. | Reading in commands              | ****************.... |
+|                        | Validating commands              | **************...... |
+|                        | Checking for new files           | ************........ |
+|                        | Saving radar outputs             | .................... |
+|                        | Generating command list          | .................... |
+| Processing unit        | Cartesian spatial interpolation  | ***................. |
+|                        | Temporal interpolation           | *................... |
+|                        | PPI to rainfall rate             | ****................ |
+|                        | PPI-PPI to rainfall rate         | **.................. |
+|                        | PPI-PPI-RHI to rainfall rate     | *................... |
+|                        | PPI-RHI to rainfall rate         | *................... |
+| Meteorological product | Total rainfall accumulation      | ******.............. |
+|                        | True rainfall accumulation       | *................... |
 |                        | (opt) Forecast                   | .................... |
-| Hydrological product   | Spatial interpolation            | ***................. |
-|                        | Temporal interpolation           | **.................. |
-|                        | Entry rate of water into river   | **.................. |
+| Hydrological product   | Entry rate of water into river   | **.................. |
+|                        | True rainfall accumulation       | *................... |
 |                        | (opt) Forecast                   | .................... |
-| Comparative measures   | True rainfall accumulation       | ***................. |
-|                        | True entry rate                  | .................... |
+|                        | (null)                           | .................... |
+| Comparative measures   | Rainfall acc. map + MSE/Bias     | ***................. |
+|                        | Entry rate curve + MSE/Bias      | .................... |
 +------------------------+----------------------------------+----------------------+
 
                                                          Legend:
@@ -34,7 +44,7 @@
 
 
 
-Next 3 tasks to prioritise (as of 2025-07-29 09:43:10):
-  1. Implement height and implement and derive core or no core of polar grid (spatial relative to material)
-  2. VPR function with radar effects
+Next 3 tasks to prioritise (as of 2025-07-31 15:03:00):
+  1. Execute command function in control_centre.c file, making and setting a polar grid
+  2. output radar files to a directory
   3. Derive equation for time dependent VPR?

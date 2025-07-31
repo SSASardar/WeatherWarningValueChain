@@ -31,7 +31,7 @@ Point get_bounding_box_bottom_right(const Bounding_box* box) {
 }
 
 // Helper to check if a point is inside an axis-aligned bounding box
-static int is_point_inside_box(const Point* p, const Bounding_box* box) {
+int is_point_inside_box(const Point* p, const Bounding_box* box) {
     // Compute bounds of box
     double min_x = fmin(fmin(box->topLeft.x, box->topRight.x),
                         fmin(box->bottomLeft.x, box->bottomRight.x));
