@@ -36,7 +36,10 @@ struct Polar_box {
 	double min_angle;
 	double max_angle;
 	double num_ranges;
-	double num_angles; 
+	double num_angles;
+	double range_resolution;
+	double angular_resolution;
+ 	double *data_array;	
 };
 
 //Creating a radar
@@ -130,14 +133,17 @@ Polar_box* create_polar_box(double time, const Spatial_raincell* s_raincell, con
 	Point* centre = get_position_raincell(time, s_raincell);
 
 	Point* radar_point = get_position_radar(radar);
-	
+
+
+	Polar_box* polar_box = malloc(sizeof(Polar_box));
+
 	double diff_x = centre->x-radar_point->x;
 	double diff_y = centre->y-radar_point->y;
 
 	double dist = sqrt((diff_x)*(diff_x) + (diff_y)*(diff_y) );
 	double radius_stratiform = raincell_get_radius_stratiform(raincell);
-	double range_resolution = get_range_res_radar(radar);
-	
+	polar_box->range_resolution= get_range_res_radar(radar);
+	double range_resolution = polar_box->range_resolution;
 
 	double angle = atan2(diff_y,diff_x);
 	if (angle<0){
@@ -153,13 +159,12 @@ Polar_box* create_polar_box(double time, const Spatial_raincell* s_raincell, con
 	// Convert del_angle from radians to degrees
 	del_angle = del_angle * RAD2DEG;
 	
-	double angular_resolution = get_angular_res_radar(radar); // is already in degreees.
-	
+	polar_box->angular_resolution = get_angular_res_radar(radar); // is already in degreees.
+	double angular_resolution = polar_box->angular_resolution;
 
 
 
 
-	Polar_box* polar_box = malloc(sizeof(Polar_box));
 
 	polar_box->radar_id = get_radar_id(radar);
 	polar_box->min_range_gate = floor((dist-radius_stratiform)/range_resolution);
@@ -174,6 +179,8 @@ Polar_box* create_polar_box(double time, const Spatial_raincell* s_raincell, con
 	polar_box->num_angles = polar_box->max_angle - polar_box->min_angle;
 	free(centre);
 	free(radar_point);
+
+	polar_box->data_array = NULL;
 
 	return polar_box;
 }
