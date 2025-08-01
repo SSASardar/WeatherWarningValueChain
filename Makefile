@@ -54,12 +54,29 @@ tests: $(wildcard $(TEST_DIR)/*.c)
 test:
 ifeq ($(strip $(TEST)),)
 	@echo "🧪 Available tests:"
-	@for f in $(wildcard $(TEST_DIR)/*.c); do \
-		name=$$(basename $$f .c); \
-		echo "  • $$name"; \
-	done
-	@echo ""
-	@echo "Run a test with: make test TEST=test_name"
+	@tests=($(wildcard $(TEST_DIR)/*.c)); \
+	for i in $${!tests[@]}; do \
+		name=$$(basename $${tests[i]} .c); \
+		echo "  $$((i+1)). $$name"; \
+	done; \
+	printf "\nEnter test number to run (or 0 to cancel): "; \
+	read num; \
+	if [ "$$num" -eq 0 ]; then \
+		echo "Cancelled."; \
+		exit 0; \
+	elif [ "$$num" -ge 1 ] && [ "$$num" -le $${#tests[@]} ]; then \
+		selected_test=$${tests[$$((num-1))]}; \
+		test_name=$$(basename $$selected_test .c); \
+		echo "🔧 Building $$selected_test"; \
+		mkdir -p $(BUILD_DIR); \
+		out_file="$(BUILD_DIR)/$$test_name"; \
+		$(CC) $(CFLAGS) $$selected_test $(SRC_NO_MAIN) -o $$out_file && \
+		echo "✅ Running $$out_file"; \
+		./$$out_file; \
+	else \
+		echo "❌ Invalid selection."; \
+		exit 1; \
+	fi
 else
 	@mkdir -p $(BUILD_DIR)
 	@src_file="$(TEST_DIR)/$(TEST).c"; \

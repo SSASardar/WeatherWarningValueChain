@@ -4,3 +4,7 @@ Doxyfile
 docs/
 *.DS_Store
 *.ps
+*.py
+outputs/
+*.log
+
