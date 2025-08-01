@@ -21,7 +21,7 @@ void print_progress() {
             "Model of rain",
             {
                 {"Holistic overview",60},
-		{"Material and spatial descriptions", 80},
+		{"Material & spatial descriptions", 80},
 		{"Development convective core",20},
 		{"Dynamic equil. VPR", 15},
 		{"What is the ground truth?",20}
@@ -37,7 +37,7 @@ void print_progress() {
 		{"Attenuation model",5},
 		{"Clutter model",5},
 		{"Getting lowest Z",5},
-		{"Measurement outputs",15}
+		{"Measurement outputs",75}
             },
             7
         },
@@ -47,10 +47,11 @@ void print_progress() {
 			{"Reading in commands",80},
 			{"Validating commands",70},
 			{"Checking for new files",60},
-			{"Saving radar outputs",0},
-			{"Generating command list",0}
+			{"Saving radar outputs",90},
+			{"Generating command list",0},
+			{"Processing instructions",0},
 		},
-		5
+		6
 	},
 	{
 		"Processing unit",
