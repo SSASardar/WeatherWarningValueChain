@@ -13,10 +13,11 @@
 #include "spatial_coords_raincell.h"
 #include "material_coords_raincell.h"
 #include "common.h"
+#include <ctype.h>
 
 
 // Defining a radar
-
+/*
 struct Radar {
 	int id;
 	char frequency[2];
@@ -40,7 +41,26 @@ struct Polar_box {
 	double range_resolution;
 	double angular_resolution;
  	double *grid;	
+	double other_angle;
 };
+
+struct RadarScan {
+	int scan_index;
+	Radar* radar;
+	Polar_box* box;
+};
+
+*/
+
+// Global registries:
+// // Global radar registry to deduplicate
+Radar* radar_list[MAX_RADARS];
+int radar_count = 0;
+
+// Scan collection
+RadarScan radar_scans[MAX_SCANS];
+int scan_count = 0;
+
 
 //Creating a radar
 Radar* create_radar(int id, const char* frequency, const char* scanning_mode,
@@ -68,6 +88,20 @@ Radar* create_radar(int id, const char* frequency, const char* scanning_mode,
 
     return r;
 }
+
+
+Radar* get_or_create_radar(int id, const char* freq, const char* mode,double x, double y, double z, double max_range,double range_res, double angular_res) {
+    for (int i = 0; i < radar_count; ++i) {
+        if (radar_list[i]->id == id)
+            return radar_list[i];
+    }
+
+    Radar* r = create_radar(id, freq, mode, x, y, z, max_range, range_res, angular_res);
+    if (r && radar_count < MAX_RADARS)
+        radar_list[radar_count++] = r;
+    return r;
+}
+
 
 
 // To check the radar setup
@@ -190,6 +224,52 @@ Polar_box* create_polar_box(double time, const Spatial_raincell* s_raincell, con
 */
 
 
+Polar_box* create_polar_box(
+    int radar_id,
+    double min_range_gate,
+    double max_range_gate,
+    double min_angle,
+    double max_angle,
+    double num_ranges,
+    double num_angles,
+    double range_res,
+    double angular_res,
+    int grid_size,
+    double *grid_data
+) {
+    // function body
+    Polar_box* box = (Polar_box*)malloc(sizeof(Polar_box));
+    if (!box) {
+        printf("Memory allocation failed for box.\n");
+        return NULL;
+    }
+
+    box->radar_id = radar_id;
+    box->min_range_gate = min_range_gate;
+    box->max_range_gate = max_range_gate;
+    box->min_angle = min_angle;
+    box->max_angle = max_angle;
+    box->num_ranges = num_ranges;
+    box->num_angles = num_angles;
+    box->range_resolution = range_res;
+    box->angular_resolution = angular_res;
+    box->other_angle = 0.0;
+
+    if (grid_size > 0 && grid_data != NULL) {
+        box->grid = (double*)malloc(sizeof(double) * grid_size);
+        if (!box->grid) {
+            printf("Grid allocation failed.\n");
+            free(box);
+            return NULL;
+        }
+        memcpy(box->grid, grid_data, sizeof(double) * grid_size);
+    } else {
+        box->grid = NULL;
+    }
+
+    return box;
+}
+
 Polar_box* init_polar_box() {
     Polar_box* polar_box = malloc(sizeof(Polar_box));
     if (!polar_box) {
@@ -208,6 +288,7 @@ Polar_box* init_polar_box() {
     polar_box->num_ranges = 0;
     polar_box->num_angles = 0;
     polar_box->radar_id = -1; // or any invalid default
+polar_box->other_angle = -1;
     return polar_box;
 }
 
@@ -402,7 +483,7 @@ int sample_from_relative_location_in_raincell(double range, double angle, const 
 
     // 4. Apply core offset in the direction of movement (assume offset along x-axis for simplicity)
     double core_centre_x = raincell_get_offset_centre_core(raincell);
-    double core_rel_x = rel_x + core_centre_x;
+    double core_rel_x = rel_x - core_centre_x;
 
     // 5. Compute distances
     double distance_to_centre = sqrt(rel_x * rel_x + rel_y * rel_y);
@@ -449,7 +530,7 @@ void fill_polar_box_grid(struct Polar_box* box,
         r1 = (get_min_range_gate(box) + ri + 0.5) * get_range_res_polar_box(box);
 	//sample_height = calculate_height_of_beam_at_range(r1, 0.0, 6371000,h0);
         for (int ai = 0; ai < num_angles; ai++) {
-            a1 = (get_max_angle(box) - (ai + 0.5)) * get_angular_res_polar_box(box);
+            a1 = (get_min_angle(box) + (ai + 0.5)) * get_angular_res_polar_box(box);
             sample = sample_from_relative_location_in_raincell(r1, a1, pos_radar, pos_raincell, raincell);
 
             // Store value in flattened grid
@@ -511,9 +592,192 @@ void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int s
 }
 
 
+//creating a radar, a polar box, and a radarscan type from the radar_scans file. 
+
+void read_radar_scans(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        perror("Failed to open file");
+        return;
+    }
+
+    char line[4096];
+    int in_block = 0;
+
+    // Temporary vars
+    int scan_index = 0;
+    int radar_id = 0;
+    char freq[2] = "", mode[4] = "";
+    double x=0,y=0,z=0,max_range=0,range_res=0,angular_res=0;
+    double min_gate=0, max_gate=0, min_angle=0, max_angle=0;
+    double num_ranges=0, num_angles=0;
+    int grid_size = 0;
+    double* grid_data = NULL;
+
+    while (fgets(line, sizeof(line), file)) {
+        if (strstr(line, "=== BEGIN RADAR_SCAN ===")) {
+            in_block = 1;
+            // Reset vars
+            scan_index = radar_id = 0;
+            freq[0] = '\0'; mode[0] = '\0';
+            x = y = z = max_range = range_res = angular_res = 0;
+            min_gate = max_gate = min_angle = max_angle = 0;
+            num_ranges = num_angles = 0;
+            grid_size = 0;
+            free(grid_data); grid_data = NULL;
+            continue;
+        }
+
+        if (strstr(line, "=== END RADAR_SCAN ===")) {
+            in_block = 0;
+
+            Radar* radar = get_or_create_radar(radar_id, freq, mode, x, y, z,
+                                               max_range, range_res, angular_res);
+            Polar_box* box = create_polar_box(radar_id, min_gate, max_gate,
+                                              min_angle, max_angle, num_ranges,
+                                              num_angles, range_res, angular_res,
+                                              grid_size, grid_data);
+
+            radar_scans[scan_count].scan_index = scan_index;
+            radar_scans[scan_count].radar = radar;
+            radar_scans[scan_count].box = box;
+            scan_count++;
+
+            free(grid_data);
+            grid_data = NULL;
+            continue;
+        }
+
+        if (!in_block) continue;
+
+        // Parse lines
+        if (sscanf(line, "scan.index=%d", &scan_index)) continue;
+        if (sscanf(line, "radar.id=%d", &radar_id)) continue;
+        if (sscanf(line, "radar.frequency=%1s", freq)) continue;
+        if (sscanf(line, "radar.scanning_mode=%3s", mode)) continue;
+        if (sscanf(line, "radar.x=%lf", &x)) continue;
+        if (sscanf(line, "radar.y=%lf", &y)) continue;
+        if (sscanf(line, "radar.z=%lf", &z)) continue;
+        if (sscanf(line, "radar.maximum_range=%lf", &max_range)) continue;
+        if (sscanf(line, "radar.range_resolution=%lf", &range_res)) continue;
+        if (sscanf(line, "radar.angular_resolution=%lf", &angular_res)) continue;
+        if (sscanf(line, "box.min_range_gate=%lf", &min_gate)) continue;
+        if (sscanf(line, "box.max_range_gate=%lf", &max_gate)) continue;
+        if (sscanf(line, "box.min_angle=%lf", &min_angle)) continue;
+        if (sscanf(line, "box.max_angle=%lf", &max_angle)) continue;
+        if (sscanf(line, "box.num_ranges=%lf", &num_ranges)) continue;
+        if (sscanf(line, "box.num_angles=%lf", &num_angles)) continue;
+        if (sscanf(line, "box.range_resolution=%lf", &range_res)) continue;
+        if (sscanf(line, "box.angular_resolution=%lf", &angular_res)) continue;
+
+        if (sscanf(line, "grid.size=%d", &grid_size)) {
+            if (grid_size > 0) {
+                grid_data = (double*)malloc(sizeof(double) * grid_size);
+                if (!grid_data) {
+                    printf("Memory allocation failed for grid.\n");
+                    fclose(file);
+                    return;
+                }
+            }
+            continue;
+        }
+
+        if (strstr(line, "grid.data=") && grid_size > 0 && grid_data != NULL) {
+            // Skip "grid.data=" prefix
+            char* p = strstr(line, "grid.data=") + strlen("grid.data=");
+            int filled = 0;
+
+            // First line of grid.data
+            while (*p && filled < grid_size) {
+                while (*p && isspace(*p)) p++;
+                if (*p) {
+                    double val;
+                    if (sscanf(p, "%lf", &val) == 1) {
+                        grid_data[filled++] = val;
+                        while (*p && !isspace(*p)) p++;
+                    }
+                }
+            }
+
+            // Continue reading lines if not full
+            while (filled < grid_size && fgets(line, sizeof(line), file)) {
+                p = line;
+                while (*p && filled < grid_size) {
+                    while (*p && isspace(*p)) p++;
+                    if (*p) {
+                        double val;
+                        if (sscanf(p, "%lf", &val) == 1) {
+                            grid_data[filled++] = val;
+                            while (*p && !isspace(*p)) p++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fclose(file);
+}
 
 
 
+Bounding_box* bounding_box_from_textfile(const Polar_box* p_box, const Radar* radar){
+if(p_box==NULL){printf("create_bounding+box_for_polar_plot\n You are trying to create a bounding box for a polar box which is not defined (points to NULL)\n The bounding box will be assigned NULL\n\n");return NULL;}	
+ 
+double rmin = p_box->min_range_gate * p_box->range_resolution;
+double rmax = p_box->max_range_gate * p_box->range_resolution;
+double anglemin = p_box->min_angle * DEG2RAD;
+double anglemax = p_box->max_angle * DEG2RAD;
+double anglemid = (anglemin + anglemax) / 2;
+ 
+double xs[5] = {
+    rmax * cos(anglemin),
+    rmin * cos(anglemin),
+    rmax * cos(anglemax),
+    rmin * cos(anglemax),
+    rmax * cos(anglemid)
+};
+ 
+double ys[5] = {
+    rmax * sin(anglemin),
+    rmin * sin(anglemin),
+    rmax * sin(anglemax),
+    rmin * sin(anglemax),
+    rmax * sin(anglemid)
+};
+ 
+ 
+double xmin = xs[0], xmax = xs[0];
+double ymin = ys[0], ymax = ys[0];
+ 
+for (int i = 1; i < 5; ++i) {
+    if (xs[i] < xmin) xmin = xs[i];
+    if (xs[i] > xmax) xmax = xs[i];
+    if (ys[i] < ymin) ymin = ys[i];
+    if (ys[i] > ymax) ymax = ys[i];
+}
 
 
+                                   
+Point* pos_radar = get_position_radar(radar);
+                                   
+                                   
+// Allocate and fill the bounding box
+Bounding_box* bbox = malloc(sizeof(Bounding_box));
+bbox->topLeft.x = xmin+pos_radar->x;
+bbox->topLeft.y = ymax+pos_radar->y;
+                                   
+bbox->topRight.x = xmax+pos_radar->x;
+bbox->topRight.y = ymax+pos_radar->y;
+                                   
+bbox->bottomLeft.x = xmin+pos_radar->x;
+bbox->bottomLeft.y = ymin+pos_radar->y;
+                                   
+bbox->bottomRight.x = xmax+pos_radar->x;
+bbox->bottomRight.y = ymin+pos_radar->y;
+                                   
+return bbox;                       
+                                   
+                                   
+}                                  
 

@@ -25,8 +25,8 @@ const Radar* radars[] = { radar1, radar2 };
     double time;
     Polar_box* box = init_polar_box();
     
-    for (int ti = 0; ti<10;ti++){
- 	time = (120.0+(double)ti*30.0)*60.0;
+    for (int ti = 0; ti<1;ti++){
+ 	time = (0.0+(double)ti*2.5)*60.0;
       	Bounding_box* true_box = create_BoundingBox_for_s_raincell(s_raincell, time, raincell);
 
 /*
@@ -41,7 +41,10 @@ const Radar* radars[] = { radar1, radar2 };
         // handle error if needed
     }
 
+
     Bounding_box* bounded_polar_box = create_bounding_box_for_polar_box(box, radars, num_radars);
+
+print_bounding_box(bounded_polar_box);
 
     // Find radar associated with polar box
     const  Radar* found_radar = find_radar_by_id(box, radars, num_radars);

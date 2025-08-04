@@ -46,6 +46,7 @@ void print_progress() {
 		{
 			{"Reading in commands",80},
 			{"Validating commands",70},
+			{"Executing commands", 10},
 			{"Checking for new files",60},
 			{"Saving radar outputs",90},
 			{"Generating command list",0},
@@ -56,7 +57,8 @@ void print_progress() {
 	{
 		"Processing unit",
 		{
-			{"Cartesian spatial interpolation", 15},
+			{"Reading the radar_scan file", 100},
+			{"Cartesian spatial interpolation", 29},
 			{"Temporal interpolation", 5},
 			{"PPI to rainfall rate", 20},
 			{"PPI-PPI to rainfall rate", 10},
@@ -64,7 +66,7 @@ void print_progress() {
 			{"PPI-RHI to rainfall rate", 5},
 
 		},
-		6
+		7
 	},
         {
             "Meteorological product",
@@ -157,21 +159,24 @@ void print_progress() {
 	    // -----------------------------
     // Manual: Next 3 tasks to do
     // -----------------------------
-    const char* next_tasks[3] = {
+    const char* next_tasks[4] = {
         "Execute command function in control_centre.c file, making and setting a polar grid",
-        "output radar files to a directory",
+        "Interpolate radar grid to cartesian grid using nearest neightbours.",
+	"Interpolate in time between two cartesian grids.",
         "Derive equation for time dependent VPR?"
     };
 
-    fprintf(file, "\n\n\nNext 3 tasks to prioritise (as of %s):\n", time_str);
+    fprintf(file, "\n\n\nNext 4 tasks to prioritise (as of %s):\n", time_str);
     fprintf(file, "  1. %s\n", next_tasks[0]);
     fprintf(file, "  2. %s\n", next_tasks[1]);
     fprintf(file, "  3. %s\n", next_tasks[2]);
+    fprintf(file, "  4. %s\n", next_tasks[3]);
 
     printf("\nNext 3 tasks to prioritise (as of %s):\n", time_str);
     printf("  1. %s\n", next_tasks[0]);
     printf("  2. %s\n", next_tasks[1]);
-    printf("  3. %s\n\n\n", next_tasks[2]);
+    printf("  3. %s\n", next_tasks[2]);
+    printf("  4. %s\n\n\n", next_tasks[3]);
 
     fclose(file);
 }

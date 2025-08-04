@@ -15,11 +15,12 @@
 |                        | Measurement outputs              | ***************..... |
 | Radar config. & contr. | Reading in commands              | ****************.... |
 |                        | Validating commands              | **************...... |
+|                        | Executing commands               | **.................. |
 |                        | Checking for new files           | ************........ |
 |                        | Saving radar outputs             | ******************.. |
 |                        | Generating command list          | .................... |
-|                        | Processing instructions          | .................... |
-| Processing unit        | Cartesian spatial interpolation  | ***................. |
+| Processing unit        | Reading the radar_scan file      | ******************** |
+|                        | Cartesian spatial interpolation  | *****............... |
 |                        | Temporal interpolation           | *................... |
 |                        | PPI to rainfall rate             | ****................ |
 |                        | PPI-PPI to rainfall rate         | **.................. |
@@ -45,7 +46,8 @@
 
 
 
-Next 3 tasks to prioritise (as of 2025-08-01 17:05:52):
+Next 4 tasks to prioritise (as of 2025-08-04 17:13:12):
   1. Execute command function in control_centre.c file, making and setting a polar grid
-  2. output radar files to a directory
-  3. Derive equation for time dependent VPR?
+  2. Interpolate radar grid to cartesian grid using nearest neightbours.
+  3. Interpolate in time between two cartesian grids.
+  4. Derive equation for time dependent VPR?
