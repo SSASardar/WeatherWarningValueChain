@@ -387,7 +387,7 @@ const Radar* find_radar_by_id(const Polar_box* box, const Radar** radars, int nu
     return NULL; // Not found
 
 }
-
+/*
 void print_polar_grid(const Polar_box* box, const Radar** radars, int num_radars) {
 if(box==NULL){printf("polar box not found (points to NULL) in print_polar_grid function.\n\n");}
   const Radar* found_radar = find_radar_by_id(box, radars, num_radars);
@@ -400,7 +400,29 @@ if(box==NULL){printf("polar box not found (points to NULL) in print_polar_grid f
     printf("Between ranges: [%.0f, %.0f]\n", get_min_range_gate(box)*get_range_res_radar(found_radar), get_max_range_gate(box)*get_range_res_radar(found_radar));
     printf("\n");
 
+}*/
+
+void print_polar_box(const Polar_box* box) {
+    if (box == NULL) {
+        printf("polar box not found (points to NULL) in print_polar_grid function.\n\n");
+        return;
+    }
+
+    // Print polar box info directly from the box
+    printf("Radar ID      : %d\n", box->radar_id);
+    printf("Num of Angles : %.0f\n", box->num_angles);
+    printf("Num of Ranges : %.0f\n", box->num_ranges);
+    printf("Between angles: [%.2f, %.2f]\n", box->min_angle, box->max_angle);
+    printf("Between ranges: [%.2f, %.2f]\n",
+           box->min_range_gate * box->range_resolution,
+           box->max_range_gate * box->range_resolution);
+
+	printf("the four values: {%.2lf,\n 	%.2lf,\n	%.2lf,\n	%.2lf}\n\n\n", box->min_range_gate * box->range_resolution*cos(box->min_angle*DEG2RAD),box->min_range_gate * box->range_resolution*sin(box->min_angle*DEG2RAD),box->max_range_gate * box->range_resolution*cos(box->min_angle*DEG2RAD),box->max_range_gate * box->range_resolution*sin(box->min_angle*DEG2RAD));
+
+
+    printf("\n");
 }
+
 
 Bounding_box* create_bounding_box_for_polar_box(const Polar_box* p_box, const Radar** radars, int num_radars){
 if(p_box==NULL){printf("create_bounding+box_for_polar_plot\n You are trying to create a bounding box for a polar box which is not defined (points to NULL)\n The bounding box will be assigned NULL\n\n");return NULL;}
@@ -483,7 +505,7 @@ int sample_from_relative_location_in_raincell(double range, double angle, const 
 
     // 4. Apply core offset in the direction of movement (assume offset along x-axis for simplicity)
     double core_centre_x = raincell_get_offset_centre_core(raincell);
-    double core_rel_x = rel_x - core_centre_x;
+    double core_rel_x = rel_x + core_centre_x;
 
     // 5. Compute distances
     double distance_to_centre = sqrt(rel_x * rel_x + rel_y * rel_y);

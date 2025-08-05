@@ -15,8 +15,8 @@
 #include "material_coords_raincell.h"
 #include "spatial_coords_raincell.h"
 #include "common.h"
-#include "processing.h"
-
+//#include "processing.h"
+struct Cart_grid;
 
 #define MAX_SCANS 1000
 #define MAX_RADARS 100
@@ -51,7 +51,7 @@ typedef struct RadarScan {
 	double time;
 	Radar* radar;
         Polar_box* box;
-	Cart_grid* c_grid;
+	struct Cart_grid* c_grid;
 } RadarScan;
 
 
@@ -114,7 +114,11 @@ const char* get_scanning_mode(const Radar*);
 
 
 
-void print_polar_grid(const Polar_box* polar_box, const Radar** radars, int num_radars);
+/*void print_polar_grid(const Polar_box* polar_box, const Radar** radars, int num_radars);
+*/
+
+void print_polar_box(const Polar_box* box);
+
 
 // Getter function declarations
 int get_radar_id_for_polar_box(const struct Polar_box* box);
