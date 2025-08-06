@@ -22,22 +22,22 @@ void print_progress() {
             {
                 {"Holistic overview",60},
 		{"Material & spatial descriptions", 80},
-		{"Development convective core",20},
-		{"Dynamic equil. VPR", 15},
-		{"What is the ground truth?",20}
+		{"A** Development convective core",20},
+		{"A** Dynamic equil. VPR", 15},
+		{"A*** What is the ground truth?",20}
             },
             5
         },
         {
             "Model of radar",
             {
-                {"Radar geometry (PPI)", 50},
+                {"Radar geometry (PPI)", 75},
 		{"Radar geometry (RHI)", 10},
-		{"Noise model", 5},
-		{"Attenuation model",5},
-		{"Clutter model",5},
-		{"Getting lowest Z",5},
-		{"Measurement outputs",75}
+		{"A** Noise model", 5},
+		{"B** Attenuation model",5},
+		{"B** Clutter model",5},
+		{"A** Getting lowest Z",5},
+		{"Measurement outputs",85}
             },
             7
         },
@@ -58,10 +58,10 @@ void print_progress() {
 		"Processing unit",
 		{
 			{"Reading the radar_scan file", 100},
-			{"Cartesian spatial interpolation", 29},
+			{"Cartesian spatial interpolation", 90},
 			{"Temporal interpolation", 5},
-			{"PPI to rainfall rate", 20},
-			{"PPI-PPI to rainfall rate", 10},
+			{"PPI/vol scan to rainfall rate", 20},
+			{"PPI-PPI to rainfall rate", 20},
 			{"PPI-PPI-RHI to rainfall rate", 5},
 			{"PPI-RHI to rainfall rate", 5},
 
@@ -157,26 +157,29 @@ void print_progress() {
 
 
 	    // -----------------------------
-    // Manual: Next 3 tasks to do
+    // Manual: Next 5 tasks to do
     // -----------------------------
-    const char* next_tasks[4] = {
+    const char* next_tasks[5] = {
         "Execute command function in control_centre.c file, making and setting a polar grid",
-        "Interpolate radar grid to cartesian grid using nearest neightbours.",
+	"Combining the volume scans for 5min interval C-band",
+	"aligning cartisian grids and merging the data.",
 	"Interpolate in time between two cartesian grids.",
         "Derive equation for time dependent VPR?"
     };
 
-    fprintf(file, "\n\n\nNext 4 tasks to prioritise (as of %s):\n", time_str);
+    fprintf(file, "\n\n\nNext 5 tasks to prioritise (as of %s):\n", time_str);
     fprintf(file, "  1. %s\n", next_tasks[0]);
     fprintf(file, "  2. %s\n", next_tasks[1]);
     fprintf(file, "  3. %s\n", next_tasks[2]);
     fprintf(file, "  4. %s\n", next_tasks[3]);
+    fprintf(file, "  5. %s\n", next_tasks[4]);
 
-    printf("\nNext 3 tasks to prioritise (as of %s):\n", time_str);
+    printf("\nNext 5 tasks to prioritise (as of %s):\n", time_str);
     printf("  1. %s\n", next_tasks[0]);
     printf("  2. %s\n", next_tasks[1]);
     printf("  3. %s\n", next_tasks[2]);
     printf("  4. %s\n\n\n", next_tasks[3]);
+    printf("  5. %s\n", next_tasks[4]);
 
     fclose(file);
 }
