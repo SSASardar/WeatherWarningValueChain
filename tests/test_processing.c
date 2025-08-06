@@ -27,7 +27,7 @@ int main() {
 
     double cart_grid_res = 12.5;
 	int num_x, num_y;
-int target_radar_id = 2;
+int target_radar_id = 1;
 for (int i = 0; i < scan_count; ++i) {
     if (radar_scans[i].radar->id == target_radar_id) {
         Polar_box* p_box = radar_scans[i].box;
@@ -67,8 +67,11 @@ for (int i = 0; i < scan_count; ++i) {
 			if (getPolarBoxIndex(p, c_x, c_y, p_box, &range_idx, &angle_idx)) {
 			    int p_grid_idx = range_idx * (int)(p_box->num_angles) + angle_idx;
 			    cg->grid[xi*num_y+yi] = p_box->grid[p_grid_idx];
+			    cg->height_grid[xi*num_y+yi] = p_box->height_grid[p_grid_idx];
+
 			} else {
 			    cg->grid[xi*num_y+yi] = -1.0;// Handle point outside polar box
+			    cg->height_grid[xi*num_y+yi] = -1.0;// Handle point outside polar box
 			}
 		z = z+1;
 		}

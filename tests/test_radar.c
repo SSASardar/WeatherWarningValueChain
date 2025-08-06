@@ -25,10 +25,8 @@ const Radar* radars[] = { radar1, radar2 };
     double time;
     Polar_box* box = init_polar_box();
     
-    for (int ti = 0; ti<15;ti++){
-	if(ti == 4){radar_test = radar2;}
-	if(ti == 10){radar_test = radar1;}
-    	    time = (0.0+(double)ti*30.0)*60.0;
+    for (int ti = 0; ti<5;ti++){
+    	   time = (0.0+(double)ti*1.0)*60.0;
       	Bounding_box* true_box = create_BoundingBox_for_s_raincell(s_raincell, time, raincell);
 
 /*

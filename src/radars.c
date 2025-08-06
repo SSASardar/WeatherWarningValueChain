@@ -235,7 +235,9 @@ Polar_box* create_polar_box(
     double range_res,
     double angular_res,
     int grid_size,
-    double *grid_data
+    double *grid_data,
+    int height_size,
+    double *height_data
 ) {
     // function body
     Polar_box* box = (Polar_box*)malloc(sizeof(Polar_box));
@@ -267,6 +269,18 @@ Polar_box* create_polar_box(
         box->grid = NULL;
     }
 
+if (height_size > 0 && height_data != NULL) {
+    box->height_grid = (double*)malloc(sizeof(double) * height_size);
+    if (!box->height_grid) {
+        printf("Grid allocation failed. for height\n");
+        free(box);
+        return NULL;
+    }
+    memcpy(box->height_grid, height_data, sizeof(double) * height_size);
+} else {
+    box->grid = NULL;
+}
+
     return box;
 }
 
@@ -278,6 +292,7 @@ Polar_box* init_polar_box() {
     }
     // Initialize pointers to NULL or zero out members as needed
     polar_box->grid = NULL;
+    polar_box->height_grid = NULL;
     // Initialize other members to sensible defaults, e.g. 0
     polar_box->range_resolution = 0.0;
     polar_box->angular_resolution = 0.0;
@@ -540,17 +555,29 @@ void fill_polar_box_grid(struct Polar_box* box,
         }
     }
 
+// Allocate memory if grid is NULL
+if (box->height_grid == NULL) {
+    //box->grid = (double *)malloc(sizeof(double) * num_ranges * num_angles * 2);
+    box->height_grid = (double *)malloc(sizeof(double) * num_ranges * num_angles);
+    if (box->height_grid == NULL) {
+        perror("Failed to allocate memory for polar box heght_grid");
+        exit(EXIT_FAILURE);
+    }
+}
+
+
+
     struct Point* pos_radar = get_position_radar(radar);
     struct Point* pos_raincell = get_position_raincell(time, s_raincell);
 	double h0 = get_height_of_radar(radar);
     double r1;
     double a1;
 	int sample;
-	//double sample_height;
+	double sample_height;
 
     for (int ri = 0; ri < num_ranges; ri++) {
         r1 = (get_min_range_gate(box) + ri + 0.5) * get_range_res_polar_box(box);
-	//sample_height = calculate_height_of_beam_at_range(r1, 0.0, 6371000,h0);
+	sample_height = calculate_height_of_beam_at_range(r1, 0.0, 6371000,h0);
         for (int ai = 0; ai < num_angles; ai++) {
             a1 = (get_min_angle(box) + (ai + 0.5)) * get_angular_res_polar_box(box);
             sample = sample_from_relative_location_in_raincell(r1, a1, pos_radar, pos_raincell, raincell);
@@ -559,11 +586,12 @@ void fill_polar_box_grid(struct Polar_box* box,
             //box->grid[ri * num_angles + ai*2 + 0] = sample_height;
             //box->grid[ri * num_angles + ai*2 + 1] = (double)sample;
             box->grid[ri * num_angles + ai] = (double)sample;
-        }
+	    box->height_grid[ri*num_angles + ai] = sample_height;
+	}
     }
 }
 
-
+/*
 void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int scan_index, const char* filename) {
     FILE* fp = fopen(filename, "a");  // Append mode to handle multiple scans
     if (!fp) {
@@ -613,6 +641,74 @@ void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int s
     fclose(fp);
 }
 
+*/
+
+
+
+void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int scan_index, const char* filename) {
+    FILE* fp = fopen(filename, "a");  // Append mode to handle multiple scans
+    if (!fp) {
+        perror("Failed to open output file");
+        exit(EXIT_FAILURE);
+    }  
+    
+    fprintf(fp, "=== BEGIN RADAR_SCAN ===\n");
+    fprintf(fp, "scan.index=%d\n", scan_index);
+    
+    // Radar metadata
+    fprintf(fp, "radar.id=%d\n", radar->id);
+    fprintf(fp, "radar.frequency=%s\n", radar->frequency);
+    fprintf(fp, "radar.scanning_mode=%s\n", radar->scanning_mode);
+    fprintf(fp, "radar.x=%.3f\n", radar->x);
+    fprintf(fp, "radar.y=%.3f\n", radar->y);
+    fprintf(fp, "radar.z=%.3f\n", radar->z);
+    fprintf(fp, "radar.maximum_range=%.3f\n", radar->maximum_range);
+    fprintf(fp, "radar.range_resolution=%.3f\n", radar->range_resolution);
+    fprintf(fp, "radar.angular_resolution=%.6f\n", radar->angular_resolution);
+    
+    // Polar box metadata
+    fprintf(fp, "box.radar_id=%d\n", box->radar_id);
+    fprintf(fp, "box.min_range_gate=%.3f\n", box->min_range_gate);
+    fprintf(fp, "box.max_range_gate=%.3f\n", box->max_range_gate);
+    fprintf(fp, "box.min_angle=%.6f\n", box->min_angle);
+    fprintf(fp, "box.max_angle=%.6f\n", box->max_angle);
+    fprintf(fp, "box.num_ranges=%.0f\n", box->num_ranges);
+    fprintf(fp, "box.num_angles=%.0f\n", box->num_angles);
+    fprintf(fp, "box.range_resolution=%.3f\n", box->range_resolution);
+    fprintf(fp, "box.angular_resolution=%.6f\n", box->angular_resolution);
+    
+    // Grid data
+    int total = (int)(box->num_ranges * box->num_angles);
+    fprintf(fp, "grid.size=%d\n", total);
+    fprintf(fp, "grid.data=");
+    for (int i = 0; i < total; i++) {
+        fprintf(fp, "%.2f", box->grid[i]);
+        if (i < total - 1) {
+            fprintf(fp, " ");
+        }
+    }
+    fprintf(fp, "\n");
+
+    // Height grid data
+    if (box->height_grid != NULL) {
+        fprintf(fp, "height.size=%d\n", total);
+        fprintf(fp, "height.data=");
+        for (int i = 0; i < total; i++) {
+            fprintf(fp, "%.2f", box->height_grid[i]);
+            if (i < total - 1) {
+                fprintf(fp, " ");
+            }
+        }
+        fprintf(fp, "\n");
+    }
+
+    fprintf(fp, "=== END RADAR_SCAN ===\n\n");
+
+    fclose(fp);
+}
+
+
+
 
 //creating a radar, a polar box, and a radarscan type from the radar_scans file. 
 
@@ -636,6 +732,9 @@ void read_radar_scans(const char* filename) {
     int grid_size = 0;
     double* grid_data = NULL;
 
+    int height_size = 0;
+    double* height_data = NULL;
+
     while (fgets(line, sizeof(line), file)) {
         if (strstr(line, "=== BEGIN RADAR_SCAN ===")) {
             in_block = 1;
@@ -647,7 +746,9 @@ void read_radar_scans(const char* filename) {
             num_ranges = num_angles = 0;
             grid_size = 0;
             free(grid_data); grid_data = NULL;
-            continue;
+	    height_size = 0;
+	    free(height_data);height_data=NULL;
+    	    continue;
         }
 
         if (strstr(line, "=== END RADAR_SCAN ===")) {
@@ -658,7 +759,7 @@ void read_radar_scans(const char* filename) {
             Polar_box* box = create_polar_box(radar_id, min_gate, max_gate,
                                               min_angle, max_angle, num_ranges,
                                               num_angles, range_res, angular_res,
-                                              grid_size, grid_data);
+                                              grid_size, grid_data,height_size,height_data);
 
             radar_scans[scan_count].scan_index = scan_index;
             radar_scans[scan_count].radar = radar;
@@ -704,6 +805,20 @@ void read_radar_scans(const char* filename) {
             continue;
         }
 
+
+	if (sscanf(line, "height.size=%d", &height_size)) {
+	    if (height_size > 0) {
+	        height_data = (double*)malloc(sizeof(double) * height_size);
+	        if (!height_data) {
+	            printf("Memory allocation failed for height.\n");
+	            fclose(file);
+	            return;
+	        }
+	    }
+	    continue;
+	}
+
+
         if (strstr(line, "grid.data=") && grid_size > 0 && grid_data != NULL) {
             // Skip "grid.data=" prefix
             char* p = strstr(line, "grid.data=") + strlen("grid.data=");
@@ -736,6 +851,36 @@ void read_radar_scans(const char* filename) {
                 }
             }
         }
+
+if (strstr(line, "height.data=") && height_size > 0 && height_data != NULL) {
+    char* p = strstr(line, "height.data=") + strlen("height.data=");
+    int filled = 0;
+
+    while (*p && filled < height_size) {
+        while (*p && isspace(*p)) p++;
+        if (*p) {
+            double val;
+            if (sscanf(p, "%lf", &val) == 1) {
+                height_data[filled++] = val;
+                while (*p && !isspace(*p)) p++;
+            }
+        }
+    }
+
+    while (filled < height_size && fgets(line, sizeof(line), file)) {
+        p = line;
+        while (*p && filled < height_size) {
+            while (*p && isspace(*p)) p++;
+            if (*p) {
+                double val;
+                if (sscanf(p, "%lf", &val) == 1) {
+                    height_data[filled++] = val;
+                    while (*p && !isspace(*p)) p++;
+                }
+            }
+        }
+    }
+}
     }
 
     fclose(file);

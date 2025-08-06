@@ -11,6 +11,7 @@
 typedef struct Cart_grid {
 	double resolution;
 	double *grid;
+	double *height_grid;
 	int num_elements;
 	int num_x;
 	int num_y;

@@ -29,6 +29,7 @@ Cart_grid* Cart_grid_init(double resolution, int num_x, int num_y, Point ref_poi
     cg->ref_point = ref_point;
 
     cg->grid = (double *)malloc(sizeof(double) * cg->num_elements);
+    cg->height_grid = (double *)malloc(sizeof(double)*cg->num_elements);
     if (!cg->grid) {
         free(cg);
 	printf("Allocating grid in Cart_grid_init() failed! allocating NULL!! \n");
@@ -37,6 +38,7 @@ Cart_grid* Cart_grid_init(double resolution, int num_x, int num_y, Point ref_poi
 
     for (int i = 0; i < cg->num_elements; i++) {
         cg->grid[i] = 0.0;
+    	cg->height_grid[i] = 0.0;
     }
 	printf("success I think? \n");
     return cg;
@@ -148,7 +150,8 @@ FILE *fp = fopen(filename, "w");
         for (int y =0;y< cg->num_y-1; y++) {
     for (int x =0; x<cg->num_x; x++) {
             int index = x * cg->num_y + y;
-            fprintf(fp, "%.2f ", cg->grid[index]);  // format as needed
+            //fprintf(fp, "%.2f ", cg->grid[index]);  // format as needed
+            fprintf(fp, "%.2f ", cg->height_grid[index]);  // format as needed
         }
         fprintf(fp, "\n");  // newline after each row
     }
