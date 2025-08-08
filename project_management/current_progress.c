@@ -34,8 +34,8 @@ void print_progress() {
                 {"Radar geometry (PPI)", 75},
 		{"Radar geometry (RHI)", 10},
 		{"A** Noise model", 5},
-		{"B** Attenuation model",5},
-		{"B** Clutter model",5},
+		{"B** Attenuation model",60},
+		{"B** Clutter model",50},
 		{"A** Getting lowest Z",5},
 		{"Measurement outputs",85}
             },

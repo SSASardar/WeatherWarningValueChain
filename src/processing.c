@@ -30,6 +30,8 @@ Cart_grid* Cart_grid_init(double resolution, int num_x, int num_y, Point ref_poi
 
     cg->grid = (double *)malloc(sizeof(double) * cg->num_elements);
     cg->height_grid = (double *)malloc(sizeof(double)*cg->num_elements);
+    cg->attenuation_grid = (double *)malloc(sizeof(double)*3*cg->num_elements);
+    
     if (!cg->grid) {
         free(cg);
 	printf("Allocating grid in Cart_grid_init() failed! allocating NULL!! \n");
@@ -39,6 +41,9 @@ Cart_grid* Cart_grid_init(double resolution, int num_x, int num_y, Point ref_poi
     for (int i = 0; i < cg->num_elements; i++) {
         cg->grid[i] = 0.0;
     	cg->height_grid[i] = 0.0;
+    	cg->attenuation_grid[3*i+0]=0.0;
+    	cg->attenuation_grid[3*i+1]=0.0;
+    	cg->attenuation_grid[3*i+2]=0.0;
     }
 	printf("success I think? \n");
     return cg;
@@ -150,9 +155,10 @@ FILE *fp = fopen(filename, "w");
         for (int y =0;y< cg->num_y-1; y++) {
     for (int x =0; x<cg->num_x; x++) {
             int index = x * cg->num_y + y;
-            //fprintf(fp, "%.2f ", cg->grid[index]);  // format as needed
-            fprintf(fp, "%.2f ", cg->height_grid[index]);  // format as needed
-        }
+//            fprintf(fp, "%.2f ", cg->grid[index]);  // format as needed
+//            fprintf(fp, "%.2f ", cg->height_grid[index]);  // format as needed
+    	    fprintf(fp,  "%.2f ", 0.00*cg->attenuation_grid[3*index+0]+1.0*cg->attenuation_grid[3*index+1]+2.0*cg->attenuation_grid[3*index+2]);    
+    }
         fprintf(fp, "\n");  // newline after each row
     }
 
@@ -160,5 +166,17 @@ FILE *fp = fopen(filename, "w");
     printf("Grid successfully written to cartesian_grid_output.txt\n");
 }
 
+/*
+void generate_attenuation_grid(Cartesian_grid* cg) {
+	double temp_var;
+	for (int i = 0 ; i < cg->num_elements;i++){
+		temp_var = cg->grid[i];
+		if (temp_var == 0.0) cg->attenuation_grid[3*i+0]
+	}
 
 
+
+
+
+}
+*/

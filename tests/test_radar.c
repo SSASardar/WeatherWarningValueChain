@@ -19,14 +19,14 @@ const Radar* radars[] = { radar1, radar2 };
     
     Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
 	
-	Radar* radar_test = radar1;
+	Radar* radar_test = radar2;
 
     //double time = 210.00*60;
     double time;
     Polar_box* box = init_polar_box();
     
     for (int ti = 0; ti<5;ti++){
-    	   time = (0.0+(double)ti*1.0)*60.0;
+    	   time = (270.0+(double)ti*1.0)*60.0;
       	Bounding_box* true_box = create_BoundingBox_for_s_raincell(s_raincell, time, raincell);
 
 /*

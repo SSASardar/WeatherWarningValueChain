@@ -27,7 +27,7 @@ int main() {
 
     double cart_grid_res = 12.5;
 	int num_x, num_y;
-int target_radar_id = 1;
+int target_radar_id = 2;
 for (int i = 0; i < scan_count; ++i) {
     if (radar_scans[i].radar->id == target_radar_id) {
         Polar_box* p_box = radar_scans[i].box;
@@ -36,6 +36,39 @@ for (int i = 0; i < scan_count; ++i) {
 	printf("Scan %d: First grid value: %.2f\n", 
                radar_scans[i].scan_index, p_box->grid[0]);
  
+/*
+	// printing the attenuation grid in polar form.... just to check. 
+	//
+	    // Open the output file
+    FILE *fileA = fopen("outputs/attenuation_grid.txt", "w");
+    if (!fileA) {
+        perror("Failed to open output file");
+        return 0;
+    }
+
+	    int num_rangesA = (int)(p_box->num_ranges);
+    int num_anglesA = (int)(p_box->num_angles);
+
+    //printf("Attenuation Grid (fastest iterator: angle):\n");
+    fprintf(fileA, "Attenuation Grid (fastest iterator: angle)\n");
+    for (int r = 0; r < num_rangesA; r++) {
+        for (int a = 0; a < num_anglesA; a++) {
+            int index = r * num_anglesA + a;
+      //      printf("%.2f %.2f %.2f ", box->attenuation_grid[index]);
+            fprintf(fileA, "| %.2f %.2f %.2f |", p_box->attenuation_grid[3*index+0], p_box->attenuation_grid[3*index+1],p_box->attenuation_grid[3*index+2]);
+        	if (a == 3) printf("%.2f ",p_box->attenuation_grid[3*index+1]);
+	}
+        printf("\n");  // new line after each range
+	fprintf(fileA, "\n");	       
+    }
+
+*/
+
+
+
+
+
+
  	// create bounding box for the polar box
 	
 	Bounding_box* bbox = bounding_box_from_textfile(p_box, radar);	
@@ -59,19 +92,27 @@ for (int i = 0; i < scan_count; ++i) {
 
 	int range_idx, angle_idx;
 	int z = 0;
+	int idA;
 	for(int xi = 0; xi<num_x;xi++){
 		p.x = ref_point.x + xi*cart_grid_res;		
 		for(int yi = 0; yi<num_y;yi++){
+			idA = xi*num_y+yi;
 			p.y = ref_point.y + yi*cart_grid_res;		
 //			if(z%10000 == 0){printf("the point tested is (%.2lf, %.2lf)\n and has result %d\n", p.x,p.y,getPolarBoxIndex(p, c_x, c_y, p_box, &range_idx, &angle_idx));}
 			if (getPolarBoxIndex(p, c_x, c_y, p_box, &range_idx, &angle_idx)) {
 			    int p_grid_idx = range_idx * (int)(p_box->num_angles) + angle_idx;
-			    cg->grid[xi*num_y+yi] = p_box->grid[p_grid_idx];
-			    cg->height_grid[xi*num_y+yi] = p_box->height_grid[p_grid_idx];
+			    cg->grid[idA] = p_box->grid[p_grid_idx];
+			    cg->height_grid[idA] = p_box->height_grid[p_grid_idx];
+			    cg->attenuation_grid[3*(idA)+0] =p_box->attenuation_grid[3*p_grid_idx + 0];
+			    cg->attenuation_grid[3*(idA)+1] =p_box->attenuation_grid[3*p_grid_idx + 1];
+			    cg->attenuation_grid[3*(idA)+2] =p_box->attenuation_grid[3*p_grid_idx + 2]; 
 
 			} else {
-			    cg->grid[xi*num_y+yi] = -1.0;// Handle point outside polar box
-			    cg->height_grid[xi*num_y+yi] = -1.0;// Handle point outside polar box
+			    cg->grid[idA] = -1.0;// Handle point outside polar box
+			    cg->height_grid[idA] = -1.0;// Handle point outside polar box
+			    cg->attenuation_grid[3*(idA)+0] =-1.0; 
+			    cg->attenuation_grid[3*(idA)+1] =-1.0; 
+			    cg->attenuation_grid[3*(idA)+2] =-1.0; 
 			}
 		z = z+1;
 		}

@@ -45,6 +45,7 @@ double angular_resolution;
 double *grid;
 double other_angle;
 double *height_grid;
+double *attenuation_grid;
 } Polar_box;
 
 typedef struct RadarScan {

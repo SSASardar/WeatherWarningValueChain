@@ -259,7 +259,8 @@ Polar_box* create_polar_box(
 
     if (grid_size > 0 && grid_data != NULL) {
         box->grid = (double*)malloc(sizeof(double) * grid_size);
-        if (!box->grid) {
+        box->attenuation_grid = (double*)malloc(sizeof(double) * 3 * grid_size);
+	if (!box->grid) {
             printf("Grid allocation failed.\n");
             free(box);
             return NULL;
@@ -280,6 +281,26 @@ if (height_size > 0 && height_data != NULL) {
 } else {
     box->grid = NULL;
 }
+double temp_var;
+int idg, idag, idagc;
+for(int p = 0; p<num_ranges;p++){
+	for (int q = 0; q<num_angles;q++){
+		idg = p*num_angles + q;
+		idag = idg*3;
+		temp_var = box->grid[idg];
+		if (temp_var == 0.0) box->attenuation_grid[idag + 0] ++;
+		if (temp_var == 1.0) box->attenuation_grid[idag + 1] ++;
+		if (temp_var == 2.0) box->attenuation_grid[idag + 2] ++;
+		
+		if (p>0){
+			idagc = 3*(p-1)*num_angles + 3*q;
+			box->attenuation_grid[idag + 0] = box->attenuation_grid[idag + 0] + box->attenuation_grid[idagc+0];
+			box->attenuation_grid[idag + 1] = box->attenuation_grid[idag + 1] + box->attenuation_grid[idagc+1];
+			box->attenuation_grid[idag + 2] = box->attenuation_grid[idag + 2] + box->attenuation_grid[idagc+2];
+		}
+
+	}
+}
 
     return box;
 }
@@ -293,6 +314,7 @@ Polar_box* init_polar_box() {
     // Initialize pointers to NULL or zero out members as needed
     polar_box->grid = NULL;
     polar_box->height_grid = NULL;
+    polar_box->attenuation_grid = NULL;
     // Initialize other members to sensible defaults, e.g. 0
     polar_box->range_resolution = 0.0;
     polar_box->angular_resolution = 0.0;
