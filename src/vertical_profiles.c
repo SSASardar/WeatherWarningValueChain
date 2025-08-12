@@ -160,7 +160,7 @@ void update_VPR(const VPR *vpr, const VPR_params *params, double time, VPR *vpr_
 	vpr_conv->CB.height = vpr->CB.height + (f_growth * params->del_h_cb_growth + f_mature * params->del_h_cb_mature)*(1.0-f_decay);
 
 
-printf("scaling factors are (f_growth, f_mature, f_decay, f_decay1, f_decay2)\n			(%.2f , %.2f , %.2f , %.2f , %.2f)\n", f_growth, f_mature, f_decay, f_decay1, f_decay2);
+//printf("scaling factors are (f_growth, f_mature, f_decay, f_decay1, f_decay2)\n			(%.2f , %.2f , %.2f , %.2f , %.2f)\n", f_growth, f_mature, f_decay, f_decay1, f_decay2);
 }
 
 
@@ -189,12 +189,14 @@ double get_reflectivity_at_height(VPR *vpr, double height) {
 
     // If height is below lowest point, return reflectivity at lowest
     if (height <= sorted_points[0].height) {
-        return sorted_points[0].reflectivity;
+       // return sorted_points[0].reflectivity;
+        return 0.0;
     }
 
     // If height is above highest point, return reflectivity at highest
     if (height >= sorted_points[4].height) {
-        return sorted_points[4].reflectivity;
+       // return sorted_points[4].reflectivity;
+    	return 0.0;
     }
 
     // Find interval where height fits and interpolate
