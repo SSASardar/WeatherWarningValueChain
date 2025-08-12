@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include "true_vertical_profile.h"
+//#include "true_vertical_profile.h"
 #include "common.h"
 
 
