@@ -60,7 +60,12 @@ typedef struct VPR_params {
 	double width_h_0;
         double del_width_h_growth;
 	double del_width_h_mature;
+
+
 	double ratio_U_to_L;
+	double del_ratio_UL_growth;
+	double del_ratio_UL_mature;
+	double del_ratio_UL_decay;
 
 	// cell base parameters
 	double Z_cb_0;
@@ -91,7 +96,7 @@ void fill_VPR_params(
     double h_bb_0, double del_h_bb_growth, double del_h_bb_mature,
     double width_Z_0, double del_width_Z_growth, double del_width_Z_mature,
     double width_h_0, double del_width_h_growth, double del_width_h_mature,
-    double ratio_U_to_L,
+    double ratio_U_to_L, double del_ratio_UL_growth, double del_ratio_UL_mature, double del_ratio_UL_decay,
     double Z_cb_0, double del_Z_cb_growth, double del_Z_cb_mature, double del_Z_cb_decay,
     double h_cb_0, double del_h_cb_growth, double del_h_cb_mature
 );

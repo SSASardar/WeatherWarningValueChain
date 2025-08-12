@@ -19,7 +19,7 @@ void fill_VPR_params(
     double h_bb_0, double del_h_bb_growth, double del_h_bb_mature,
     double width_Z_0, double del_width_Z_growth, double del_width_Z_mature,
     double width_h_0, double del_width_h_growth, double del_width_h_mature,
-    double ratio_U_to_L,
+    double ratio_U_to_L,double del_ratio_UL_growth, double del_ratio_UL_mature, double del_ratio_UL_decay,
     double Z_cb_0, double del_Z_cb_growth, double del_Z_cb_mature, double del_Z_cb_decay,
     double h_cb_0, double del_h_cb_growth, double del_h_cb_mature
 ) {
@@ -57,6 +57,9 @@ void fill_VPR_params(
     params->del_width_h_mature = del_width_h_mature;
 
     params->ratio_U_to_L = ratio_U_to_L;
+    params->del_ratio_UL_growth = del_ratio_UL_growth;
+    params->del_ratio_UL_mature = del_ratio_UL_mature;
+    params->del_ratio_UL_decay = del_ratio_UL_decay;
 
     params->Z_cb_0          = Z_cb_0;
     params->del_Z_cb_growth = del_Z_cb_growth;
@@ -111,7 +114,7 @@ void update_VPR(const VPR *vpr, const VPR_params *params, double time, VPR *vpr_
 
     double width_Z = 0.00;
     double width_h = 0.00;
-
+    double ratio_UL = 0.00;
    // if (params->t_mature_start > params->t_growth_start)
         f_growth = (time - params->t_growth_start) * params->div_f_growth;
 
@@ -145,14 +148,15 @@ void update_VPR(const VPR *vpr, const VPR_params *params, double time, VPR *vpr_
 	
 	width_Z = params->width_Z_0 + (f_growth * params->del_width_Z_growth + f_mature * params->del_width_Z_mature)*(1.0-f_decay);
 	width_h = params->width_h_0 + (f_growth * params->del_width_h_growth + f_mature * params->del_width_h_mature)*(1.0-f_decay);
-
+	
+	ratio_UL = params->ratio_U_to_L + (f_growth * params->del_ratio_UL_growth + f_mature * params->del_ratio_UL_mature + f_decay1 * params->del_ratio_UL_decay)*(1.0-f_decay2);
     // Bright band upper
-    	vpr_conv->BB_u.reflectivity = vpr_conv->BB_m.reflectivity - (width_Z) * (1-params->ratio_U_to_L);
-	vpr_conv->BB_u.height = vpr_conv->BB_m.height + (width_h) * (1-params->ratio_U_to_L);
+    	vpr_conv->BB_u.reflectivity = vpr_conv->BB_m.reflectivity - (width_Z) * (1-ratio_UL);
+	vpr_conv->BB_u.height = vpr_conv->BB_m.height + (width_h) * (1-ratio_UL);
 
     // Bright band lower:
-    	vpr_conv->BB_l.reflectivity = vpr_conv->BB_m.reflectivity - (width_Z) * (params->ratio_U_to_L);
-	vpr_conv->BB_l.height = vpr_conv->BB_m.height - (width_h) * (params->ratio_U_to_L);
+    	vpr_conv->BB_l.reflectivity = vpr_conv->BB_m.reflectivity - (width_Z) * (ratio_UL);
+	vpr_conv->BB_l.height = vpr_conv->BB_m.height - (width_h) * (ratio_UL);
     	
     // Cell base:
     
