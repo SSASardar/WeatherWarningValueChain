@@ -89,13 +89,13 @@ printf("conv at %.0f minutes (%s): \n", 60.0 + 30.0 * i, stages[i]);
     init_VPR_params(params);
 
     fill_VPR_params(params,
-        100.0*60, 130.0*60.0, 150.0*60.0, 170.0*60.0, 200.0*60.0,
+        60.0*60, 120.0*60.0, 170.0*60.0, 200.0*60.0, 230.0*60.0,
         10.0, 8000.0, 2000.0,        // Echo top
         50.0, 3.0, 2.0, 2.0,         // Bright band Z
         3000.0, 100.0, 50.0,       // Bright band heights
         25.0, 4.0, 3.0,              // Width Z
         1000.0, 4500.0, 750.0,       // Width H
-        0.4,-0.2, -0.1, -0.05,           // Ratio
+        0.4,-0.2, -0.15, -0.05,           // Ratio
         35, -3.0, 2.0, 20.0,         // Cell base Z
         500.0, 150.0, 25.0           // Cell base heights
     );

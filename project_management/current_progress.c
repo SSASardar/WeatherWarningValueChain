@@ -22,9 +22,9 @@ void print_progress() {
             {
                 {"Holistic overview",60},
 		{"Material & spatial descriptions", 80},
-		{"A** Development convective core",20},
-		{"A** Dynamic equil. VPR", 15},
-		{"A*** What is the ground truth?",20}
+		{"Development convective core",80},
+		{"Dynamic equil. VPR", 80},
+		{"What is the ground truth?",20}
             },
             5
         },
@@ -35,7 +35,7 @@ void print_progress() {
 		{"Radar geometry (RHI)", 10},
 		{"A** Noise model", 5},
 		{"B** Attenuation model",60},
-		{"B** Clutter model",50},
+		{"B** Clutter model",5},
 		{"A** Getting lowest Z",5},
 		{"Measurement outputs",85}
             },
@@ -60,13 +60,14 @@ void print_progress() {
 			{"Reading the radar_scan file", 100},
 			{"Cartesian spatial interpolation", 90},
 			{"Temporal interpolation", 5},
+			{"Reconstruction of VPR",5},
 			{"PPI/vol scan to rainfall rate", 20},
 			{"PPI-PPI to rainfall rate", 20},
 			{"PPI-PPI-RHI to rainfall rate", 5},
 			{"PPI-RHI to rainfall rate", 5},
 
 		},
-		7
+		8
 	},
         {
             "Meteorological product",
@@ -163,8 +164,8 @@ void print_progress() {
         "Execute command function in control_centre.c file, making and setting a polar grid",
 	"Combining the volume scans for 5min interval C-band",
 	"aligning cartisian grids and merging the data.",
-	"Interpolate in time between two cartesian grids.",
-        "Derive equation for time dependent VPR?"
+	"Reconstructed VPR based on the measurement",
+        "Correction factor to lowest reflectivity"
     };
 
     fprintf(file, "\n\n\nNext 5 tasks to prioritise (as of %s):\n", time_str);
