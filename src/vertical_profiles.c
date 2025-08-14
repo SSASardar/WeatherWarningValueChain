@@ -222,10 +222,76 @@ double get_reflectivity_at_height(VPR *vpr, double height) {
 
 
 
+void cumaddVPR(const VPR *src, VPR *dest) {
+    dest->ET.reflectivity += src->ET.reflectivity;
+    dest->ET.height       += src->ET.height;
+
+    dest->BB_u.reflectivity += src->BB_u.reflectivity;
+    dest->BB_u.height       += src->BB_u.height;
+
+    dest->BB_m.reflectivity += src->BB_m.reflectivity;
+    dest->BB_m.height       += src->BB_m.height;
+
+    dest->BB_l.reflectivity += src->BB_l.reflectivity;
+    dest->BB_l.height       += src->BB_l.height;
+
+    dest->CB.reflectivity += src->CB.reflectivity;
+    dest->CB.height       += src->CB.height;
+}
+
+void divideVPR(VPR *vpr, int divisor) {
+    if (divisor == 0) {
+        fprintf(stderr, "Error: Division by zero.\n");
+        return;
+    }
+
+    double d = (double)divisor;  // ensure double precision division
+
+    vpr->ET.reflectivity /= d;
+    vpr->ET.height       /= d;
+
+    vpr->BB_u.reflectivity /= d;
+    vpr->BB_u.height       /= d;
+
+    vpr->BB_m.reflectivity /= d;
+    vpr->BB_m.height       /= d;
+
+    vpr->BB_l.reflectivity /= d;
+    vpr->BB_l.height       /= d;
+
+    vpr->CB.reflectivity /= d;
+    vpr->CB.height       /= d;
+}
 
 
 
+void cumaddVPR_scale(const VPR *src, VPR *dest, double scale) {
+    dest->ET.reflectivity += src->ET.reflectivity * scale;
+    dest->ET.height       += src->ET.height * scale;
 
+    dest->BB_u.reflectivity += src->BB_u.reflectivity * scale;
+    dest->BB_u.height       += src->BB_u.height * scale;
 
+    dest->BB_m.reflectivity += src->BB_m.reflectivity * scale;
+    dest->BB_m.height       += src->BB_m.height * scale;
 
+    dest->BB_l.reflectivity += src->BB_l.reflectivity * scale;
+    dest->BB_l.height       += src->BB_l.height * scale;
 
+    dest->CB.reflectivity += src->CB.reflectivity * scale;
+    dest->CB.height       += src->CB.height * scale;
+}
+
+/**
+ * Multiply all reflectivity values in a VPR by a scalar.
+ * The VPR is modified in-place.
+ */
+void multiplyVPR(VPR *vpr, double scalar) {
+    if (!vpr) return;
+
+    vpr->ET.reflectivity   *= scalar;
+    vpr->BB_u.reflectivity *= scalar;
+    vpr->BB_m.reflectivity *= scalar;
+    vpr->BB_l.reflectivity *= scalar;
+    vpr->CB.reflectivity   *= scalar;
+}

@@ -112,4 +112,12 @@ double interpolate_reflectivity(VPR_point p1, VPR_point p2, double height);
 
 double get_reflectivity_at_height(VPR *vpr, double height);
 
+void cumaddVPR(const VPR *src, VPR *dest);
+
+void divideVPR(VPR *vpr, int divisor);	
+
+void cumaddVPR_scale(const VPR *src, VPR *dest, double scale);
+
+void multiplyVPR(VPR *vpr, double scalar);
+
 #endif // VERTICAL_PROFILES_H
