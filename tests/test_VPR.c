@@ -85,8 +85,8 @@ printf("conv at %.0f minutes (%s): \n", 60.0 + 30.0 * i, stages[i]);
     */ // end of block 1
 
 
-
 /*
+
 // start of block 2, 
 
 
@@ -115,7 +115,7 @@ printf("conv at %.0f minutes (%s): \n", 60.0 + 30.0 * i, stages[i]);
 
     double time_min = 0.0;
     double time_max = 270.0 * 60.0; // seconds
-    double time_step = 5.0 * 60.0;  // seconds
+    double time_step = 1.0 * 60.0;  // seconds
     int n_times = (int)((time_max - time_min) / time_step) + 1;
 
     FILE *f = fopen("outputs/reflectivity_profile.txt", "w");
@@ -148,11 +148,11 @@ printf("conv at %.0f minutes (%s): \n", 60.0 + 30.0 * i, stages[i]);
     }
 
     fclose(f);
-*/
+
     
 
 
-
+*/
 
 
 /*
@@ -398,6 +398,8 @@ for (int i = 0; i < num_timesteps; i++) {
 free(history);
 fclose(f_avg);
 */
+
+ // Block 5
 // --- Setup parameters ---
 VPR_params *params = malloc(sizeof(VPR_params));
 init_VPR_params(params);
@@ -425,7 +427,7 @@ int n_heights = (int)((height_max - height_min) / height_step) + 1;
 
 double time_min = 0.0;
 double time_max = 270.0 * 60.0; // seconds
-double time_step = 5.0 * 60.0;  // seconds
+double time_step = 1.0 * 60.0;  // seconds
 int n_times = (int)((time_max - time_min) / time_step) + 1;
 
 FILE *f = fopen("outputs/reflectivity_profile_avg.txt", "w");
@@ -454,9 +456,10 @@ for (int h = 0; h < n_heights; h++) {
         // Reset sum profile
         memset(VPR_sum, 0, sizeof(*VPR_sum));
 
-        // Collect samples for last 5 minutes (including current)
-        for (int m = 0; m < 5; m++) {
-            double sample_time = time_seconds - m * 60.0;
+        // Collect samples for last 5 minutes (exc current)
+        for (int m = 0; m < 1; m++) {
+	    //double sample_time = time_seconds - (m+1) * 60.0;
+            double sample_time = time_seconds - (m+1) * 60.0;
             if (sample_time < time_min) {
                 // If not enough history, just use current time
                 sample_time = time_min;

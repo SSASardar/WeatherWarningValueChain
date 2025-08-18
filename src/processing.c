@@ -138,13 +138,23 @@ bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box, int
     return true;
 }
 
-void writeCartGridToFile(Cart_grid* cg, int scan_id) {
+void writeCartGridToFile(Cart_grid* cg, int scan_id, int what_to_print) {
     if (!cg || !cg->grid) {
         printf("Error: Null Cart_grid or grid.\n");
         return;
     }
 char filename[100];
-snprintf(filename, sizeof(filename), "outputs/cartesian_grid_output_%d.txt", scan_id);
+
+//snprintf(filename, sizeof(filename), "outputs/cartesian_grid_output_%d.txt", scan_id);
+if (what_to_print == 0) snprintf(filename, sizeof(filename), "outputs/m_cartesian_grid_output_%d.txt", scan_id);
+
+if (what_to_print == 1) snprintf(filename, sizeof(filename), "outputs/h_cartesian_grid_output_%d.txt", scan_id);
+
+if (what_to_print == 2) snprintf(filename, sizeof(filename), "outputs/a_cartesian_grid_output_%d.txt", scan_id);
+
+
+
+
 
 FILE *fp = fopen(filename, "w");
     if (!fp) {
@@ -155,9 +165,9 @@ FILE *fp = fopen(filename, "w");
         for (int y =0;y< cg->num_y-1; y++) {
     for (int x =0; x<cg->num_x; x++) {
             int index = x * cg->num_y + y;
-//            fprintf(fp, "%.2f ", cg->grid[index]);  // format as needed
-//            fprintf(fp, "%.2f ", cg->height_grid[index]);  // format as needed
-    	    fprintf(fp,  "%.2f ", 0.00*cg->attenuation_grid[3*index+0]+1.0*cg->attenuation_grid[3*index+1]+2.0*cg->attenuation_grid[3*index+2]);    
+	    if (what_to_print == 0) fprintf(fp, "%.2f ", cg->grid[index]);  // format as needed
+            if (what_to_print == 1) fprintf(fp, "%.2f ", cg->height_grid[index]);  // format as needed
+    	    if (what_to_print == 2) fprintf(fp,  "%.2f ", 0.00*cg->attenuation_grid[3*index+0]+1.0*cg->attenuation_grid[3*index+1]+2.0*cg->attenuation_grid[3*index+2]);    
     }
         fprintf(fp, "\n");  // newline after each row
     }

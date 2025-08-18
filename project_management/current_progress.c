@@ -24,7 +24,7 @@ void print_progress() {
 		{"Material & spatial descriptions", 80},
 		{"Development convective core",80},
 		{"Dynamic equil. VPR", 80},
-		{"What is the ground truth?",20}
+		{"What is the ground truth?",70}
             },
             5
         },
@@ -33,10 +33,10 @@ void print_progress() {
             {
                 {"Radar geometry (PPI)", 75},
 		{"Radar geometry (RHI)", 10},
-		{"A** Noise model", 5},
-		{"B** Attenuation model",60},
-		{"B** Clutter model",5},
-		{"A** Getting lowest Z",5},
+		{"Noise model", 5},
+		{"Attenuation model",60},
+		{"Clutter model",5},
+		{"Getting lowest Z",5},
 		{"Measurement outputs",85}
             },
             7
@@ -108,6 +108,10 @@ void print_progress() {
         "|        Category        |                Task              |        Progress      |\n"
         "+------------------------+----------------------------------+----------------------+\n";
 
+
+    const char* split = 
+	"+------------------------+----------------------------------+----------------------+\n";
+
     printf("\n\n\n%s", header);
     fprintf(file, "%s", header);
 
@@ -132,6 +136,8 @@ void print_progress() {
                     categories[i].tasks[j].task,
                     progress);
         }
+	printf("%s", split);
+	fprintf(file, "%s", split);
     }
 
     const char* footer =
@@ -161,11 +167,11 @@ void print_progress() {
     // Manual: Next 5 tasks to do
     // -----------------------------
     const char* next_tasks[5] = {
-        "Execute command function in control_centre.c file, making and setting a polar grid",
-	"Combining the volume scans for 5min interval C-band",
+        "Combining the volume scans for 5min interval C-band",
 	"aligning cartisian grids and merging the data.",
 	"Reconstructed VPR based on the measurement",
-        "Correction factor to lowest reflectivity"
+        "Correction factor to lowest reflectivity",
+	"Noise model of radar integration into sampling from VPR"
     };
 
     fprintf(file, "\n\n\nNext 5 tasks to prioritise (as of %s):\n", time_str);
@@ -179,8 +185,8 @@ void print_progress() {
     printf("  1. %s\n", next_tasks[0]);
     printf("  2. %s\n", next_tasks[1]);
     printf("  3. %s\n", next_tasks[2]);
-    printf("  4. %s\n\n\n", next_tasks[3]);
-    printf("  5. %s\n", next_tasks[4]);
+    printf("  4. %s\n", next_tasks[3]);
+    printf("  5. %s\n\n\n", next_tasks[4]);
 
     fclose(file);
 }

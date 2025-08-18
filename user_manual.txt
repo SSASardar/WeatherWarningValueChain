@@ -1,0 +1,172 @@
+THIS IS TO GUIDE YOU TO GETTING AND REPRODUCING YOUR RESULTS: 
+
+
+You must operate from the root directory of the repository. Directories outputs, visualisations, and plots need to be one level below you. 
+
+The mentioned directories need to exist. 
+
+
+
+GRAPHS FOR RAINFALL MODEL (folders A to D),
+
+	you need files in the :
+				reflectivity_profile.txt,
+				reflectivity_profile_avg.txt,
+				reflectivity_profile_1min.txt,
+				reflectivity_profile_5min.txt,
+				reflectivity_profile_avg_1min.txt,
+				reflectivity_profile_avg_5min.txt,
+				Breflectivity_profile_avg_1min.txt,
+				Creflectivity_profile_avg_1min.txt,
+
+				vpr_stages.txt
+				vpr_comparison.txt
+
+
+	you need to edit and run the following test files in the tests/ folder:
+
+				test_VPR.c
+
+
+
+	instructions for:
+
+				reflectivity_profileXXXX.txt
+						
+						comment all blocks in the VPR file
+							
+						uncomment block 2 in the test_VPR.c file. 
+
+						Ensure the right VPR parameters are set. 
+
+						Ensure the right height samples for the reolution in the graphs. 
+
+						Ensure the correct timesteps for the 1 min and 5 min files. 
+							The minuteless files are at a 5min resolution. 
+
+						Once the right parameters are set, run the test file. 
+
+						CHANGE the filename to the right name to match the needed files above. 
+
+
+				reflectivity_profile_avgXXXXX.txt 
+
+						comment all blocks in the VPR file
+						
+						uncomment block 5 in the test_VPR.c file.
+
+						Ensure ALL the right parameters are set. Like above. 
+
+						Ensure the number of sample points are correct too. Change the time interval for this as well. 
+
+						Once the right parameters are set, run the file. 
+
+						Change the filename to the right name to match the needed files above. 
+
+				vpr_stages.txt and vpr_comparison.txt:
+
+						commend all blocks in the VPR file
+
+						uncomment block 3 in the test_VPR.c file
+
+						ensure the right VPR parameters are set. 
+
+						change the height resolution and other height information if so desired. 
+
+						once satisfied, run the file. 
+
+						the filenames should be correct.
+
+	GETTING to the graphs: 	
+
+				A: run $ python visualisations/VPR_SoT_RR.py
+
+				B: run $ python visualisations/plot_vpr_comparison_normalised_individual.py
+
+				C: run $ python visualisations/instant_v_running.py
+
+				D: run $ python visualisations/communication_rate_test_copy.py
+				  AND
+				   run $ python visualisations/communication_rate_tests_1mins_copy.py
+
+
+
+
+CARTESIAN FORM OF RADAR IMAGES:
+
+
+	You need the following files: 
+					radar_scans.txt
+					*_catesian_grid_output_*.txt 
+						m_ , h_ , or a_ as possible prefixes
+						_(number) for the scan number/id.
+						for each scan number you will need all three forms (m, h and a).
+
+	you need to edit and run the following test files in the tests/ folder:
+
+				test_radar.c
+				test_processing.c
+
+
+
+	instructions for:
+
+					radar_scans.txt
+
+						IN test_radar.c						
+
+						set the radar parameters to your likining:
+							scanning type, location and height in reference plane, max resolution and rnage resolution. and angular resolution.
+						
+						set your raincell parameters (these still will change) in create_raincell() function. 
+
+						define the radar motion in create_spatial_raincell() function. 
+	
+						Determine the sampling times for the radar  by changing the time parameter in teh first for loop. 
+
+						run the test file test_radar.c
+
+
+					*_cartesian_grid_output_*.txt
+
+						IN test_processing.c
+
+						set the target_radar_id to the right id... otherwise there will be no output. 
+
+						set the cartesian grid resolution as you like. 
+
+						fun the test file test_processing.c
+
+	Getting to the graphs:
+
+		The graphs are either the attenuation ("amount" of attenuation), the height of the radar beam, or which part of the raincell the radar sampled from. 
+	
+			For the graph in polar coordinates (based on the radar_scans.txt): 
+
+				run $ python visualisations/plotpolarpointdata.py 
+						THEN select the radar_scans.txt file with the number. 
+
+			For the attenuation, height and sampling plots in cartesian coordinates
+				run $ python visualisations/plot_cartesian_grid2.py
+
+		The plots can be found in the plots folder in the repository. 				
+
+
+
+
+
+
+
+RUNNING TESTS:
+			
+	Ensure you are in the base folder (Repo).
+
+	run $ make test
+	
+		THEN the available tests will be listed, pick one using the number pad. 
+
+
+
+
+
+

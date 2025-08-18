@@ -32,7 +32,7 @@ bool isPointInSectorAnnulus(Point p, Point center, double minAngle, double maxAn
 bool getPolarBoxIndex(Point p, double c_x, double c_y,const Polar_box* box, int *range_idx, int *angle_idx);
 
 
-void writeCartGridToFile(Cart_grid* cg, int scan_id); 
+void writeCartGridToFile(Cart_grid* cg, int scan_id, int what_to_print); 
 
 
 #endif /* PROCESSING_H  */

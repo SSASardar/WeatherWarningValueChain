@@ -117,8 +117,7 @@ for (int i = 0; i < scan_count; ++i) {
 		z = z+1;
 		}
 	}
-   
-   writeCartGridToFile(cg,i);
+ for (int k = 0; k<3;k++)   writeCartGridToFile(cg,i,k);
     }
 
 }
