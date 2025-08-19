@@ -20,6 +20,7 @@ struct Cart_grid;
 
 #define MAX_SCANS 1000
 #define MAX_RADARS 100
+#define KEA 1.333333333*6371000.0
 
 // Opaque defition of the radar structure
 typedef struct Radar {int id;
@@ -90,6 +91,7 @@ Polar_box* create_polar_box(
     double range_res,
     double angular_res,
     int grid_size,
+    double other_angle,
     double *grid_data,
     int height_size,
     double *height_data
@@ -97,7 +99,7 @@ Polar_box* create_polar_box(
 
 
 Polar_box* init_polar_box();
-
+void update_other_angle(Polar_box* p_box, double new_angle_in_degs);
 int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_raincell, const Radar* radar, const Raincell* raincell);
 
 void print_radar_specs(const Radar* radar);
@@ -140,10 +142,10 @@ const Radar* find_radar_by_id(const Polar_box* box, const Radar** radars, int nu
 
 Bounding_box* create_bounding_box_for_polar_box(const Polar_box* p_box, const Radar** radars, int num_radars);
 
-double calculate_height_of_beam_at_range(double range, double elevation, double mean_earth_radius, double height_of_radar);
+double calculate_height_of_beam_at_range(double range, double elevation, double height_of_radar);
 
 
-int sample_from_relative_location_in_raincell(double range, double angle, const Point* radar_centre, const Point* spatial_centre, const Raincell* raincell);
+int sample_from_relative_location_in_raincell(double range, double angle, double elevation, const Point* radar_centre, const Point* spatial_centre, const Raincell* raincell);
 
 void fill_polar_box_grid(struct Polar_box* box, const struct Radar* radar, const struct Spatial_raincell* s_raincell, const struct Raincell* raincell, double time);
 

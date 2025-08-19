@@ -15,7 +15,6 @@
 #include "common.h"
 #include <ctype.h>
 
-
 // Defining a radar
 /*
 struct Radar {
@@ -235,6 +234,7 @@ Polar_box* create_polar_box(
     double range_res,
     double angular_res,
     int grid_size,
+    double other_angle,
     double *grid_data,
     int height_size,
     double *height_data
@@ -255,7 +255,7 @@ Polar_box* create_polar_box(
     box->num_angles = num_angles;
     box->range_resolution = range_res;
     box->angular_resolution = angular_res;
-    box->other_angle = 0.0;
+    box->other_angle = other_angle;
 
     if (grid_size > 0 && grid_data != NULL) {
         box->grid = (double*)malloc(sizeof(double) * grid_size);
@@ -325,10 +325,16 @@ Polar_box* init_polar_box() {
     polar_box->num_ranges = 0;
     polar_box->num_angles = 0;
     polar_box->radar_id = -1; // or any invalid default
-polar_box->other_angle = -1;
+polar_box->other_angle = 0*DEG2RAD;
     return polar_box;
 }
 
+void update_other_angle(Polar_box* p_box, double new_angle_in_degs){
+
+	if(p_box == NULL){printf("in radars.c the updating angle failed because of a NULL polar box\n"); return;}
+
+	p_box->other_angle = new_angle_in_degs*DEG2RAD;
+}
 
 int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_raincell, const Radar* radar, const Raincell* raincell) {
     if (!polar_box) return -1;
@@ -337,13 +343,17 @@ int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_
         printf("fill_polar_box:\nAt simulation time %.2lf you are trying to fill a polar box for a %s\nPolar box NOT updated.\n\n", time, get_scanning_mode(radar));
         return -1;
     }
+	
+    // earth 4/3 mean earth model. in calculating slant range.
+    double kea_and_radar = KEA + radar->z;
 
     Point* centre = get_position_raincell(time, s_raincell);
     Point* radar_point = get_position_radar(radar);
 
     double diff_x = centre->x - radar_point->x;
     double diff_y = centre->y - radar_point->y;
-    double dist = sqrt(diff_x * diff_x + diff_y * diff_y);
+    double dist_s = sqrt(diff_x * diff_x + diff_y * diff_y);
+    double dist = sin(dist_s/kea_and_radar)*(kea_and_radar)/cos(polar_box->other_angle);
     double radius_stratiform = raincell_get_radius_stratiform(raincell);
 
     polar_box->range_resolution = get_range_res_radar(radar);
@@ -360,8 +370,8 @@ int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_
     double angular_resolution = polar_box->angular_resolution;
 
     polar_box->radar_id = get_radar_id(radar);
-    polar_box->min_range_gate = floor((dist - radius_stratiform) / range_resolution);
-    polar_box->max_range_gate = ceil((dist + radius_stratiform) / range_resolution);
+    polar_box->min_range_gate = floor((sin((dist_s - radius_stratiform)/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / range_resolution);
+    polar_box->max_range_gate = ceil((sin((dist_s + radius_stratiform)/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / range_resolution);
 
     polar_box->min_angle = floor((angle - del_angle) / angular_resolution);
     polar_box->max_angle = ceil((angle + del_angle) / angular_resolution);
@@ -467,25 +477,27 @@ if(p_box==NULL){printf("create_bounding+box_for_polar_plot\n You are trying to c
 	const Radar* found_radar = find_radar_by_id(p_box, radars, num_radars);
 
 double rmin = get_min_range_gate(p_box) * get_range_res_radar(found_radar);
+double curvature_correction_min = cos(p_box->other_angle + atan2(rmin*cos(p_box->other_angle),(KEA+rmin*sin(p_box->other_angle))));
 double rmax = get_max_range_gate(p_box) * get_range_res_radar(found_radar);
+double curvature_correction_max = cos(p_box->other_angle + atan2(rmax*cos(p_box->other_angle),(KEA+rmax*sin(p_box->other_angle))));
 double anglemin = get_min_angle(p_box) * DEG2RAD;
 double anglemax = get_max_angle(p_box) * DEG2RAD;
 double anglemid = (anglemin + anglemax) / 2;
 
 double xs[5] = {
-    rmax * cos(anglemin),
-    rmin * cos(anglemin),
-    rmax * cos(anglemax),
-    rmin * cos(anglemax),
-    rmax * cos(anglemid)
+    rmax * curvature_correction_max * cos(anglemin),
+    rmin * curvature_correction_min * cos(anglemin),
+    rmax * curvature_correction_max * cos(anglemax),
+    rmin * curvature_correction_min * cos(anglemax),
+    rmax * curvature_correction_max * cos(anglemid)
 };
 
 double ys[5] = {
-    rmax * sin(anglemin),
-    rmin * sin(anglemin),
-    rmax * sin(anglemax),
-    rmin * sin(anglemax),
-    rmax * sin(anglemid)
+    rmax * curvature_correction_max * sin(anglemin),
+    rmin * curvature_correction_min * sin(anglemin),
+    rmax * curvature_correction_max * sin(anglemax),
+    rmin * curvature_correction_min * sin(anglemax),
+    rmax * curvature_correction_max * sin(anglemid)
 };
 
 
@@ -521,16 +533,20 @@ return bbox;
 
 }
 
-double calculate_height_of_beam_at_range(double range, double elevation, double mean_earth_radius, double height_of_radar){
-	double height_from_earth_centre = (1.333333*mean_earth_radius+height_of_radar);
-	return sqrt(range*range + height_from_earth_centre*height_from_earth_centre + 2*range*height_from_earth_centre*sin(elevation))-1.33333*mean_earth_radius;
+double calculate_height_of_beam_at_range(double range, double elevation, double height_of_radar){
+	double height_from_earth_centre = (KEA+height_of_radar);
+	double corrected_elevation = elevation + atan2(range*cos(elevation), KEA+range*sin(elevation));
+	return sqrt(range*range + height_from_earth_centre*height_from_earth_centre + 2*range*height_from_earth_centre*sin(corrected_elevation))-KEA;
 }
 
 
-int sample_from_relative_location_in_raincell(double range, double angle, const Point* radar_centre, const Point* spatial_centre, const Raincell* raincell) {
+int sample_from_relative_location_in_raincell(double range, double angle, double elevation, const Point* radar_centre, const Point* spatial_centre, const Raincell* raincell) {
+
+	
+    double curvature_correction = cos(elevation + atan2(range*cos(elevation),(KEA+range*sin(elevation))));
     // 1. Convert polar to cartesian in radar coordinates
-    double dx = range * cos(angle*DEG2RAD);
-    double dy = range * sin(angle*DEG2RAD);
+    double dx = range * curvature_correction * cos(angle*DEG2RAD);
+    double dy = range * curvature_correction * sin(angle*DEG2RAD);
 
     // 2. Absolute coordinates of the radar sample point
     double sample_x = radar_centre->x + dx;
@@ -599,10 +615,10 @@ if (box->height_grid == NULL) {
 
     for (int ri = 0; ri < num_ranges; ri++) {
         r1 = (get_min_range_gate(box) + ri + 0.5) * get_range_res_polar_box(box);
-	sample_height = calculate_height_of_beam_at_range(r1, 0.0, 6371000,h0);
+	sample_height = calculate_height_of_beam_at_range(r1, box->other_angle, h0);
         for (int ai = 0; ai < num_angles; ai++) {
             a1 = (get_min_angle(box) + (ai + 0.5)) * get_angular_res_polar_box(box);
-            sample = sample_from_relative_location_in_raincell(r1, a1, pos_radar, pos_raincell, raincell);
+            sample = sample_from_relative_location_in_raincell(r1, a1,  box->other_angle, pos_radar, pos_raincell, raincell);
 
             // Store value in flattened grid
             //box->grid[ri * num_angles + ai*2 + 0] = sample_height;
@@ -698,7 +714,7 @@ void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int s
     fprintf(fp, "box.num_angles=%.0f\n", box->num_angles);
     fprintf(fp, "box.range_resolution=%.3f\n", box->range_resolution);
     fprintf(fp, "box.angular_resolution=%.6f\n", box->angular_resolution);
-    
+    fprintf(fp, "box.other_angle=%.6f\n", box->other_angle); 
     // Grid data
     int total = (int)(box->num_ranges * box->num_angles);
     fprintf(fp, "grid.size=%d\n", total);
@@ -753,7 +769,7 @@ void read_radar_scans(const char* filename) {
     double num_ranges=0, num_angles=0;
     int grid_size = 0;
     double* grid_data = NULL;
-
+    double other_angle = 0;
     int height_size = 0;
     double* height_data = NULL;
 
@@ -764,7 +780,7 @@ void read_radar_scans(const char* filename) {
             scan_index = radar_id = 0;
             freq[0] = '\0'; mode[0] = '\0';
             x = y = z = max_range = range_res = angular_res = 0;
-            min_gate = max_gate = min_angle = max_angle = 0;
+            min_gate = max_gate = min_angle = max_angle = other_angle = 0;
             num_ranges = num_angles = 0;
             grid_size = 0;
             free(grid_data); grid_data = NULL;
@@ -781,7 +797,7 @@ void read_radar_scans(const char* filename) {
             Polar_box* box = create_polar_box(radar_id, min_gate, max_gate,
                                               min_angle, max_angle, num_ranges,
                                               num_angles, range_res, angular_res,
-                                              grid_size, grid_data,height_size,height_data);
+                                              grid_size, other_angle, grid_data,height_size,height_data);
 
             radar_scans[scan_count].scan_index = scan_index;
             radar_scans[scan_count].radar = radar;
@@ -814,6 +830,7 @@ void read_radar_scans(const char* filename) {
         if (sscanf(line, "box.num_angles=%lf", &num_angles)) continue;
         if (sscanf(line, "box.range_resolution=%lf", &range_res)) continue;
         if (sscanf(line, "box.angular_resolution=%lf", &angular_res)) continue;
+        if (sscanf(line, "box.other_angle=%lf", &other_angle)) continue;
 
         if (sscanf(line, "grid.size=%d", &grid_size)) {
             if (grid_size > 0) {
@@ -913,26 +930,34 @@ if (strstr(line, "height.data=") && height_size > 0 && height_data != NULL) {
 Bounding_box* bounding_box_from_textfile(const Polar_box* p_box, const Radar* radar){
 if(p_box==NULL){printf("create_bounding+box_for_polar_plot\n You are trying to create a bounding box for a polar box which is not defined (points to NULL)\n The bounding box will be assigned NULL\n\n");return NULL;}	
  
-double rmin = p_box->min_range_gate * p_box->range_resolution;
+
+
+
+//double rmin = p_box->min_range_gate * p_box->range_resolution;
+double rmin = (p_box->min_range_gate * p_box->range_resolution);
+double curvature_correction_min = cos(p_box->other_angle + atan2(rmin*cos(p_box->other_angle),(KEA+rmin*sin(p_box->other_angle))));
+//double rmax = p_box->max_range_gate * p_box->range_resolution;
 double rmax = p_box->max_range_gate * p_box->range_resolution;
+double curvature_correction_max = cos(p_box->other_angle + atan2(rmax*cos(p_box->other_angle),(KEA+rmax*sin(p_box->other_angle))));
 double anglemin = p_box->min_angle * DEG2RAD;
 double anglemax = p_box->max_angle * DEG2RAD;
 double anglemid = (anglemin + anglemax) / 2;
  
 double xs[5] = {
-    rmax * cos(anglemin),
-    rmin * cos(anglemin),
-    rmax * cos(anglemax),
-    rmin * cos(anglemax),
-    rmax * cos(anglemid)
+    rmax * curvature_correction_max * cos(anglemin),
+    rmin * curvature_correction_min * cos(anglemin),
+    rmax * curvature_correction_max * cos(anglemax),
+    rmin * curvature_correction_min * cos(anglemax),
+    rmax * curvature_correction_max * cos(anglemid)
 };
  
 double ys[5] = {
-    rmax * sin(anglemin),
-    rmin * sin(anglemin),
-    rmax * sin(anglemax),
-    rmin * sin(anglemax),
-    rmax * sin(anglemid)
+    rmax * curvature_correction_max * sin(anglemin),
+    rmin * curvature_correction_min * sin(anglemin),
+    rmax * curvature_correction_max * sin(anglemax),
+    rmin * curvature_correction_min * sin(anglemax),
+    rmax * curvature_correction_max * sin(anglemid)
+
 };
  
  

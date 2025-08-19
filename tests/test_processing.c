@@ -8,7 +8,8 @@
 #include <time.h>
 #include "processing.h"
 #include<stdbool.h>
-
+#include <float.h>
+#include "vertical_profiles.h"
 
 int main() {
 	clock_t start = clock();
@@ -91,7 +92,7 @@ for (int i = 0; i < scan_count; ++i) {
 	double c_y = radar->y;
 
 	int range_idx, angle_idx;
-	int z = 0;
+//	int z = 0;
 	int idA;
 	for(int xi = 0; xi<num_x;xi++){
 		p.x = ref_point.x + xi*cart_grid_res;		
@@ -114,7 +115,7 @@ for (int i = 0; i < scan_count; ++i) {
 			    cg->attenuation_grid[3*(idA)+1] =-1.0; 
 			    cg->attenuation_grid[3*(idA)+2] =-1.0; 
 			}
-		z = z+1;
+//		z = z+1;
 		}
 	}
  for (int k = 0; k<3;k++)   writeCartGridToFile(cg,i,k);
