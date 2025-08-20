@@ -88,29 +88,6 @@ bool isPointInSectorAnnulus(Point p, Point center, double minAngle, double maxAn
     return isAngleBetween(angle, minAngle, maxAngle);
 }
 
-/*
-bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box, int *range_idx, int *angle_idx) {
-    double dx = p.x - c_x;
-    double dy = p.y - c_y;
-
-    double range_res = box->range_resolution;
-    double r = sqrt(dx * dx + dy * dy);
-    if (r < box->min_range_gate*range_res || r > box->max_range_gate*range_res) return false;
-
-    double angle = normalizeAngle(atan2(dy, dx));
-    if (!isAngleBetween(angle, box->min_angle*DEG2RAD, box->max_angle*DEG2RAD)) return false;
-
-    *range_idx = (int)floor((r - (double)box->min_range_gate*range_res) / box->range_resolution);
-    double angle_diff = normalizeAngle(angle - box->min_angle);
-    *angle_idx = (int)floor(angle_diff / box->angular_resolution*DEG2RAD);
-
-    if (*range_idx >= (int)box->num_ranges || *angle_idx >= (int)box->num_angles)
-        return false;
-
-    return true;
-}
-*/
-
 bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box, int *range_idx, int *angle_idx) {
     double dx = p.x - c_x;
     double dy = p.y - c_y;
@@ -162,7 +139,7 @@ FILE *fp = fopen(filename, "w");
         return;
     }
 
-        for (int y =0;y< cg->num_y-1; y++) {
+        for (int y =0;y< cg->num_y; y++) {
     for (int x =0; x<cg->num_x; x++) {
             int index = x * cg->num_y + y;
 	    if (what_to_print == 0) fprintf(fp, "%.2f ", cg->grid[index]);  // format as needed
@@ -190,7 +167,6 @@ void generate_attenuation_grid(Cartesian_grid* cg) {
 
 }
 */
-
 Vol_scan *init_vol_scan(Cart_grid *cart_grids, int num_PPIs) {
     if (!cart_grids || num_PPIs <= 0) return NULL;
 
@@ -198,110 +174,73 @@ Vol_scan *init_vol_scan(Cart_grid *cart_grids, int num_PPIs) {
     if (!vol) return NULL;
 
     vol->num_PPIs = num_PPIs;
-    vol->num_x = 0;
-    vol->num_y = 0;
-    vol->ref_point.x = DBL_MAX;
-    vol->ref_point.y = DBL_MAX;
 
-    // Determine ref_point (minimum), num_x/num_y (maximum)
-
-double min_x = DBL_MAX, min_y = DBL_MAX;
-double max_x = -DBL_MAX, max_y = -DBL_MAX;
-
-for (int i = 0; i < num_PPIs; i++) {
-    Cart_grid *g = &cart_grids[i];
-
-    if (g->ref_point.x < min_x) min_x = g->ref_point.x;
-    if (g->ref_point.y < min_y) min_y = g->ref_point.y;
-
-    double g_max_x = g->ref_point.x + g->resolution * (g->num_x - 1);
-    double g_max_y = g->ref_point.y + g->resolution * (g->num_y - 1);
-
-    if (g_max_x > max_x) max_x = g_max_x;
-    if (g_max_y > max_y) max_y = g_max_y;
-}
-
-
-
-vol->ref_point.x = min_x;
-vol->ref_point.y = min_y;
-
-// Compute number of points
-vol->num_x = (int)ceil((max_x - min_x) / cart_grids[0].resolution) + 1;
-vol->num_y = (int)ceil((max_y - min_y) / cart_grids[0].resolution) + 1;
-vol->num_elements = vol->num_x * vol->num_y;
-
-
-
-
-
-/*
+    double min_x = DBL_MAX, min_y = DBL_MAX;
     double max_x = -DBL_MAX, max_y = -DBL_MAX;
-for (int i = 0; i < num_PPIs; i++) {
-    double grid_max_x = cart_grids[i].ref_point.x + cart_grids[i].num_x * cart_grids[i].resolution;
-    double grid_max_y = cart_grids[i].ref_point.y + cart_grids[i].num_y * cart_grids[i].resolution;
-    if (grid_max_x > max_x) max_x = grid_max_x;
-    if (grid_max_y > max_y) max_y = grid_max_y;
-}
 
-double resolution = cart_grids[0].resolution;
-vol->num_x = (int)ceil((max_x - vol->ref_point.x) / resolution);
-vol->num_y = (int)ceil((max_y - vol->ref_point.y) / resolution);
-vol->num_elements = vol->num_x * vol->num_y;
-  */
+    for (int i = 0; i < num_PPIs; i++) {
+        Cart_grid *g = &cart_grids[i];
+        if (g->ref_point.x < min_x) min_x = g->ref_point.x;
+        if (g->ref_point.y < min_y) min_y = g->ref_point.y;
+        double g_max_x = g->ref_point.x + g->resolution * (g->num_x - 1);
+        double g_max_y = g->ref_point.y + g->resolution * (g->num_y - 1);
+        if (g_max_x > max_x) max_x = g_max_x;
+        if (g_max_y > max_y) max_y = g_max_y;
+    }
+
+    vol->ref_point.x = min_x;
+    vol->ref_point.y = min_y;
+
+    double res = cart_grids[0].resolution;
+    vol->num_x = (int)ceil((max_x - min_x) / res) + 1;
+    vol->num_y = (int)ceil((max_y - min_y) / res) + 1;
+    vol->num_elements = vol->num_x * vol->num_y;
 
 
+    vol->resolution  = cart_grids[0].resolution;
 
+    vol->grid_refl   = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
+    vol->grid_height = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
+    vol->grid_att    = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
+    vol->display_grid = (double *)calloc(vol->num_elements, sizeof(double));
 
-
-
-
-// allocate grid: one VPR_point per PPI per cartesian point
-    vol->grid = (VPR_point *)calloc(vol->num_elements * num_PPIs, sizeof(VPR_point));
-    if (!vol->grid) {
+    if (!vol->grid_refl || !vol->grid_height || !vol->grid_att || !vol->display_grid) {
+        free(vol->grid_refl); free(vol->grid_height); free(vol->grid_att); free(vol->display_grid);
         free(vol);
         return NULL;
     }
 
-    // allocate display grid (same size as num_elements for simplicity)
-    vol->display_grid = (VPR_point *)calloc(vol->num_elements, sizeof(VPR_point));
-    if (!vol->display_grid) {
-        free(vol->grid);
-        free(vol);
-        return NULL;
+    for (int i = 0; i < vol->num_elements * num_PPIs; i++) {
+        vol->grid_refl[i] = NAN;
+        vol->grid_height[i] = NAN;
+        vol->grid_att[i] = NAN;
     }
 
     return vol;
 }
 
-
 int add_cart_grid_to_volscan(Vol_scan *vol, Cart_grid *grid, int ppi_index) {
     if (!vol || !grid) return -1;
     if (ppi_index < 0 || ppi_index >= vol->num_PPIs) return -2;
 
+    double res = grid->resolution;
+
     for (int y = 0; y < grid->num_y; y++) {
         for (int x = 0; x < grid->num_x; x++) {
-            int local_idx = y * grid->num_x + x;
+            int local_idx = x * grid->num_y + y;
+            double abs_x = grid->ref_point.x + x * res;
+            double abs_y = grid->ref_point.y + y * res;
 
-            // Compute absolute coordinates relative to grid->ref_point
-            double abs_x = grid->ref_point.x + x * grid->resolution;
-            double abs_y = grid->ref_point.y + y * grid->resolution;
+            int vol_x = (int)((abs_x - vol->ref_point.x) / res);
+            int vol_y = (int)((abs_y - vol->ref_point.y) / res);
 
-            // Compute indices in the Vol_scan grid
-            int global_x = (int)floor((abs_x - vol->ref_point.x) / grid->resolution);
-            int global_y = (int)floor((abs_y - vol->ref_point.y) / grid->resolution);
+            if (vol_x < 0 || vol_x >= vol->num_x || vol_y < 0 || vol_y >= vol->num_y) continue;
 
-            if (global_x < 0 || global_x >= vol->num_x ||
-                global_y < 0 || global_y >= vol->num_y) {
-                continue; // outside bounds of volume scan
-            }
+            int vol_idx = vol_index(vol, vol_x, vol_y, ppi_index);
 
-            int vol_idx = vol_index(vol, global_x, global_y, ppi_index);
-
-            // Fill VPR_point (set missing values to NaN if needed)
-            VPR_point *pt = &vol->grid[vol_idx];
-            pt->reflectivity = grid->grid ? grid->grid[local_idx] : NAN;
-            pt->height       = grid->height_grid ? grid->height_grid[local_idx] : NAN;
+            vol->grid_refl[vol_idx]   = grid->grid ? grid->grid[local_idx] : NAN;
+            vol->grid_height[vol_idx] = grid->height_grid ? grid->height_grid[local_idx] : NAN;
+            vol->grid_att[vol_idx]    = grid->attenuation_grid ? grid->attenuation_grid[local_idx] : NAN;
         }
     }
 
@@ -309,13 +248,46 @@ int add_cart_grid_to_volscan(Vol_scan *vol, Cart_grid *grid, int ppi_index) {
 }
 
 
+/*
+int add_cart_grid_to_volscan(Vol_scan *vol, Cart_grid *grid, int ppi_index) {
+    if (!vol || !grid) return -1;
+    if (ppi_index < 0 || ppi_index >= vol->num_PPIs) return -2;
+
+    double res = (vol->num_x > 1) ? 
+                 (vol->num_x - 1) / ((grid->ref_point.x + grid->num_x*grid->resolution - vol->ref_point.x) / (vol->num_x - 1)) : grid->resolution;
+
+    for (int y = 0; y < grid->num_y; y++) {
+        for (int x = 0; x < grid->num_x; x++) {
+            int local_idx = y * grid->num_x + x;
+
+            double abs_x = grid->ref_point.x + x * grid->resolution;
+            double abs_y = grid->ref_point.y + y * grid->resolution;
+
+            int vol_x = (int)round((abs_x - vol->ref_point.x) / res);
+            int vol_y = (int)round((abs_y - vol->ref_point.y) / res);
+
+            if (vol_x < 0 || vol_x >= vol->num_x || vol_y < 0 || vol_y >= vol->num_y) continue;
+
+            int vol_idx = vol_index(vol, vol_x, vol_y, ppi_index);
+
+            vol->grid_refl[vol_idx]   = grid->grid ? grid->grid[local_idx] : NAN;
+            vol->grid_height[vol_idx] = grid->height_grid ? grid->height_grid[local_idx] : NAN;
+            vol->grid_att[vol_idx]    = grid->attenuation_grid ? grid->attenuation_grid[local_idx] : NAN;
+        }
+    }
+
+    return 0;
+}
+*/
+
 void free_vol_scan(Vol_scan *vol) {
     if (!vol) return;
-    if (vol->grid) free(vol->grid);
-    if (vol->display_grid) free(vol->display_grid);
+    free(vol->grid_refl);
+    free(vol->grid_height);
+    free(vol->grid_att);
+    free(vol->display_grid);
     free(vol);
 }
-
 
 int write_vol_scan_ppi_to_file(const Vol_scan *vol, int ppi_index, const char *filename) {
     if (!vol || !filename) return -1;
@@ -328,17 +300,14 @@ int write_vol_scan_ppi_to_file(const Vol_scan *vol, int ppi_index, const char *f
     fprintf(f, "# Grid size: %d x %d\n", vol->num_x, vol->num_y);
     fprintf(f, "# Format: reflectivity height\n");
 
-    for (int y = 0; y < vol->num_y; y++) {
         for (int x = 0; x < vol->num_x; x++) {
+    for (int y = 0; y < vol->num_y; y++) {
             int idx = vol_index(vol, x, y, ppi_index);
-            double refl  = vol->grid[idx].reflectivity;
-            double h     = vol->grid[idx].height;
+            double refl = vol->grid_refl[idx];
+            double h    = vol->grid_height[idx];
 
-            if (isnan(refl) || isnan(h)) {
-                fprintf(f, "NaN NaN ");
-            } else {
-                fprintf(f, "%.2f %.2f ", refl, h);
-            }
+            if (isnan(refl) || isnan(h)) fprintf(f, "NaN NaN ");
+            else fprintf(f, "%.2f %.2f ", refl, h);
         }
         fprintf(f, "\n");
     }
@@ -348,11 +317,56 @@ int write_vol_scan_ppi_to_file(const Vol_scan *vol, int ppi_index, const char *f
 }
 
 
+int compute_display_grid_max(Vol_scan *vol) {
+    if (!vol) return -1;
 
+    for (int y = 0; y < vol->num_y; y++) {
+        for (int x = 0; x < vol->num_x; x++) {
+            int base_idx = x * vol->num_y + y;  // index into display_grid
+            double max_val = -INFINITY;
+            int found = 0;
 
+            for (int ppi = 0; ppi < vol->num_PPIs; ppi++) {
+                int idx = vol_index(vol, x, y, ppi);
+                double refl = vol->grid_refl[idx];
+                if (!isnan(refl)) {
+                    if (!found || refl > max_val) {
+                        max_val = refl;
+                        found = 1;
+                    }
+                }
+            }
 
+            vol->display_grid[base_idx] = found ? max_val : NAN;
+        }
+    }
 
+    return 0;
+}
 
+int write_display_grid_to_file(const Vol_scan *vol, const char *filename) {
+    if (!vol || !filename) return -1;
+
+    FILE *f = fopen(filename, "w");
+    if (!f) return -2;
+
+    fprintf(f, "# Vol_scan Display Grid (max reflectivity across PPIs)\n");
+    fprintf(f, "# Grid size: %d x %d\n", vol->num_x, vol->num_y);
+    fprintf(f, "# Format: reflectivity\n");
+
+    for (int x = 0; x < vol->num_x; x++) {
+        for (int y = 0; y < vol->num_y; y++) {
+            int idx = x * vol->num_y + y;
+            double val = vol->display_grid[idx];
+            if (isnan(val)) fprintf(f, "NaN ");
+            else fprintf(f, "%.2f ", val);
+        }
+        fprintf(f, "\n");
+    }
+
+    fclose(f);
+    return 0;
+}
 
 
 

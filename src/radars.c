@@ -222,7 +222,7 @@ Polar_box* create_polar_box(double time, const Spatial_raincell* s_raincell, con
 
 */
 
-
+/*
 Polar_box* create_polar_box(
     int radar_id,
     double min_range_gate,
@@ -304,6 +304,105 @@ for(int p = 0; p<num_ranges;p++){
 
     return box;
 }
+*/
+
+Polar_box* create_polar_box(
+    int radar_id,
+    double min_range_gate,
+    double max_range_gate,
+    double min_angle,
+    double max_angle,
+    double num_ranges,
+    double num_angles,
+    double range_res,
+    double angular_res,
+    int grid_size,
+    double other_angle,
+    double *grid_data,
+    int height_size,
+    double *height_data
+) {
+    Polar_box* box = (Polar_box*)malloc(sizeof(Polar_box));
+    if (!box) {
+        printf("Memory allocation failed for Polar_box.\n");
+        return NULL;
+    }
+
+    // Initialize all pointers to NULL
+    box->grid = NULL;
+    box->attenuation_grid = NULL;
+    box->height_grid = NULL;
+
+    // Set scalar values
+    box->radar_id = radar_id;
+    box->min_range_gate = min_range_gate;
+    box->max_range_gate = max_range_gate;
+    box->min_angle = min_angle;
+    box->max_angle = max_angle;
+    box->num_ranges = num_ranges;
+    box->num_angles = num_angles;
+    box->range_resolution = range_res;
+    box->angular_resolution = angular_res;
+    box->other_angle = other_angle;
+
+    // Allocate grid and attenuation_grid if needed
+    if (grid_size > 0 && grid_data != NULL) {
+        box->grid = (double*)malloc(sizeof(double) * grid_size);
+        box->attenuation_grid = (double*)malloc(sizeof(double) * 3 * grid_size);
+
+        if (!box->grid || !box->attenuation_grid) {
+            printf("Grid allocation failed.\n");
+            free(box->grid);
+            free(box->attenuation_grid);
+            free(box);
+            return NULL;
+        }
+
+        memcpy(box->grid, grid_data, sizeof(double) * grid_size);
+        memset(box->attenuation_grid, 0, sizeof(double) * 3 * grid_size); // initialize to 0
+    }
+
+    // Allocate height_grid if needed
+    if (height_size > 0 && height_data != NULL) {
+        box->height_grid = (double*)malloc(sizeof(double) * height_size);
+        if (!box->height_grid) {
+            printf("Height grid allocation failed.\n");
+            free(box->grid);
+            free(box->attenuation_grid);
+            free(box);
+            return NULL;
+        }
+        memcpy(box->height_grid, height_data, sizeof(double) * height_size);
+    }
+
+    // Compute attenuation grid cumulative sum
+    if (box->grid && box->attenuation_grid) {
+        for (int p = 0; p < (int)num_ranges; p++) {
+            for (int q = 0; q < (int)num_angles; q++) {
+                int idg = p * (int)num_angles + q;
+                int idag = idg * 3;
+                double val = box->grid[idg];
+
+                // Increment corresponding attenuation
+                if (val == 0.0) box->attenuation_grid[idag + 0] += 1.0;
+                if (val == 1.0) box->attenuation_grid[idag + 1] += 1.0;
+                if (val == 2.0) box->attenuation_grid[idag + 2] += 1.0;
+
+                // Add cumulative from previous row if not first row
+                if (p > 0) {
+                    int idagc = 3 * ((p - 1) * (int)num_angles + q);
+                    box->attenuation_grid[idag + 0] += box->attenuation_grid[idagc + 0];
+                    box->attenuation_grid[idag + 1] += box->attenuation_grid[idagc + 1];
+                    box->attenuation_grid[idag + 2] += box->attenuation_grid[idagc + 2];
+                }
+            }
+        }
+    }
+
+    return box;
+}
+
+
 
 Polar_box* init_polar_box() {
     Polar_box* polar_box = malloc(sizeof(Polar_box));

@@ -26,7 +26,7 @@ int main() {
 
     // -------------------------------
     // Define Cartesian grid resolution
-    double cart_grid_res = 12.5;
+    double cart_grid_res = 25;
 
     // Step 1: allocate space for Cart_grids
     Cart_grid *cart_grids = malloc(scan_count * sizeof(Cart_grid));
@@ -103,17 +103,29 @@ int main() {
     printf("Volume scan created: %d PPIs, %d x %d grid, %d elements\n",
            vol->num_PPIs, vol->num_x, vol->num_y, vol->num_elements);
 
+/*
     // Example: inspect one point
     int test_x = 1500, test_y = 1000, test_ppi = 10;
     int idx = test_ppi * vol->num_elements + test_y * vol->num_x + test_x;
     if (idx < vol->num_elements * vol->num_PPIs) {
         printf("Sample VPR point: refl=%.2f, h=%.2f\n",
-               vol->grid[idx].reflectivity,
-               vol->grid[idx].height);
+               vol->grid_refl[idx],
+               vol->grid_height[idx]);
     }
 
 
-    write_vol_scan_ppi_to_file(vol, 2, "outputs/ppi10.txt");
+//    write_vol_scan_ppi_to_file(vol, 1, "outputs/ppi1.txt");
+
+for (int ppi_idx = 0; ppi_idx < scan_count; ppi_idx++) {
+    char filename[256];  // buffer for filename
+    snprintf(filename, sizeof(filename), "outputs/ppi%d.txt", ppi_idx);
+    write_vol_scan_ppi_to_file(vol, ppi_idx, filename);
+}
+*/
+
+
+compute_display_grid_max(vol);
+write_display_grid_to_file(vol, "outputs/disp_grid_max.txt");
 
 
     // Step 5: cleanup

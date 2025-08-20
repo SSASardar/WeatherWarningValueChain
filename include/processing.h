@@ -24,16 +24,18 @@ typedef struct Cart_grid {
 
 
 typedef struct Vol_scan {
-    int num_PPIs;              // number of PPI scans
-    int num_elements;          // total number of elements in grid
-    int num_x;                 // grid size in X
-    int num_y;                 // grid size in Y
-    Point ref_point;           // minimum reference point of all Cart_grids
-    VPR_point *grid;           // main grid, size = num_elements * num_PPIs
-    VPR_point *display_grid;   // display grid, regularized resolution
+    int num_PPIs;
+    int num_elements;
+    int num_x;
+    int num_y;
+    Point ref_point;
+    double resolution;
+
+    double *grid_refl;      // size = num_elements * num_PPIs
+    double *grid_height;    // optional
+    double *grid_att;       // optional
+    double *display_grid;   // optional, size = num_elements
 } Vol_scan;
-
-
 
 
 
@@ -55,7 +57,7 @@ void writeCartGridToFile(Cart_grid* cg, int scan_id, int what_to_print);
 Vol_scan *init_vol_scan(Cart_grid *cart_grids, int num_PPIs);
 
 static inline int vol_index(const Vol_scan *vol, int x, int y, int ppi) {
-    return ppi * vol->num_elements + y * vol->num_x + x;
+    return ppi * vol->num_elements + x * vol->num_y + y;
 }
 
 int add_cart_grid_to_volscan(Vol_scan *vol, Cart_grid *grid, int ppi_index);
@@ -66,5 +68,6 @@ void free_vol_scan(Vol_scan *vol);
 int write_vol_scan_ppi_to_file(const Vol_scan *vol, int ppi_index, const char *filename);
 
 
-
+int compute_display_grid_max(Vol_scan *vol);
+int write_display_grid_to_file(const Vol_scan *vol, const char *filename); 
 #endif /* PROCESSING_H  */
