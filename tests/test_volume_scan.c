@@ -113,7 +113,7 @@ int main() {
     }
 
 
-    write_vol_scan_ppi_to_file(vol, 10, "outputs/ppi10.txt");
+    write_vol_scan_ppi_to_file(vol, 2, "outputs/ppi10.txt");
 
 
     // Step 5: cleanup
