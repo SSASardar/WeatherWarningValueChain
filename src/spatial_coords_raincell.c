@@ -18,7 +18,7 @@
 
 
 // Structure of spatial raincell
-
+/*
 struct Spatial_raincell {
 	int id;
 	double initial_x;
@@ -26,7 +26,7 @@ struct Spatial_raincell {
 	double dx;
 	double dy;
 };
-
+*/
 
 
 

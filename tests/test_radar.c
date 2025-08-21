@@ -19,14 +19,15 @@ const Radar* radars[] = { radar1, radar2 };
     
     Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
 	
-	Radar* radar_test = radar2;
+	Radar* radar_test = radar1;
 
     //double time = 210.00*60;
     double time;
     Polar_box* box = init_polar_box();
     
     for (int ti = 0; ti<16;ti++){
-    	   time = (265.0+(double)ti*(0.3125))*60.0;
+    	  // time = (265.0+(double)ti*(0.3125))*60.0;
+    	   time = (197.5+(double)ti*(0.3125))*60.0;
       	Bounding_box* true_box = create_BoundingBox_for_s_raincell(s_raincell, time, raincell);
 
 
@@ -62,7 +63,7 @@ print_bounding_box(bounded_polar_box);
 
 fill_polar_box_grid(box, radar_test, s_raincell, raincell, time);
 
-save_polar_box_grid_to_file(box, radar_test, ti, "outputs/radar_scans.txt");
+save_polar_box_grid_to_file(box, radar_test, ti, time, "outputs/radar_scans.txt");
 }
 printf("===================\n\n");
 // Cleanup

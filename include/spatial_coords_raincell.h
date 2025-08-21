@@ -11,7 +11,13 @@
 #include "material_coords_raincell.h"
 
 // Opaque defintiion of spatial raincell coordinates.
-typedef struct Spatial_raincell Spatial_raincell;
+typedef struct Spatial_raincell {
+	int id;
+	double initial_x;
+	double initial_y;
+	double dx;
+	double dy;
+} Spatial_raincell;
 
 // function declarations
 Spatial_raincell* create_spatial_raincell(int d, double intial_x, double intial_y, double velocity);

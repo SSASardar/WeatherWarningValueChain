@@ -45,7 +45,7 @@ Cart_grid* Cart_grid_init(double resolution, int num_x, int num_y, Point ref_poi
     	cg->attenuation_grid[3*i+1]=0.0;
     	cg->attenuation_grid[3*i+2]=0.0;
     }
-	printf("success I think? \n");
+	//printf("success I think? \n");
     return cg;
 }
 
@@ -139,8 +139,8 @@ FILE *fp = fopen(filename, "w");
         return;
     }
 
-        for (int y =0;y< cg->num_y; y++) {
     for (int x =0; x<cg->num_x; x++) {
+        for (int y =0;y< cg->num_y; y++) {
             int index = x * cg->num_y + y;
 	    if (what_to_print == 0) fprintf(fp, "%.2f ", cg->grid[index]);  // format as needed
             if (what_to_print == 1) fprintf(fp, "%.2f ", cg->height_grid[index]);  // format as needed
@@ -225,8 +225,8 @@ int add_cart_grid_to_volscan(Vol_scan *vol, Cart_grid *grid, int ppi_index) {
 
     double res = grid->resolution;
 
-    for (int y = 0; y < grid->num_y; y++) {
         for (int x = 0; x < grid->num_x; x++) {
+    for (int y = 0; y < grid->num_y; y++) {
             int local_idx = x * grid->num_y + y;
             double abs_x = grid->ref_point.x + x * res;
             double abs_y = grid->ref_point.y + y * res;
@@ -320,8 +320,8 @@ int write_vol_scan_ppi_to_file(const Vol_scan *vol, int ppi_index, const char *f
 int compute_display_grid_max(Vol_scan *vol) {
     if (!vol) return -1;
 
-    for (int y = 0; y < vol->num_y; y++) {
         for (int x = 0; x < vol->num_x; x++) {
+    for (int y = 0; y < vol->num_y; y++) {
             int base_idx = x * vol->num_y + y;  // index into display_grid
             double max_val = -INFINITY;
             int found = 0;
@@ -367,6 +367,91 @@ int write_display_grid_to_file(const Vol_scan *vol, const char *filename) {
     fclose(f);
     return 0;
 }
+int write_true_grid_to_file(const Vol_scan *vol, const char *filename) {
+    if (!vol || !filename) return -1;
+
+    FILE *f = fopen(filename, "w");
+    if (!f) return -2;
+
+    fprintf(f, "# Vol_scan True Grid (RALA)\n");
+    fprintf(f, "# Grid size: %d x %d\n", vol->num_x, vol->num_y);
+    fprintf(f, "# Format: reflectivity\n");
+
+    for (int x = 0; x < vol->num_x; x++) {
+        for (int y = 0; y < vol->num_y; y++) {
+            int idx = x * vol->num_y + y;
+            double val = vol->refl_ALA[idx];
+            if (isnan(val)) fprintf(f, "NaN ");
+            else fprintf(f, "%.2f ", val);
+        }
+        fprintf(f, "\n");
+    }
+
+    fclose(f);
+    return 0;
+}
+// A helper function to classify a point relative to a raincell
+int classify_point_in_raincell(const Point *pt, const Point *raincell_center, const Raincell *raincell) {
+    double dx = pt->x - raincell_center->x;
+    double dy = pt->y - raincell_center->y;
+
+    double distance_to_center = sqrt(dx*dx + dy*dy);
+
+    // Compute distance to core using offset center
+    double core_center_x = raincell_center->x - raincell_get_offset_centre_core(raincell);
+    double core_center_y = raincell_center->y; // adjust if your core offset has y component
+    double dx_core = pt->x - core_center_x;
+    double dy_core = pt->y - core_center_y;
+    double distance_to_core = sqrt(dx_core*dx_core + dy_core*dy_core);
+
+
+
+    if (distance_to_center > raincell_get_radius_stratiform(raincell)) {
+        return 0; // outside
+    } else if (distance_to_core <= raincell_get_radius_core(raincell)) {
+        return 2; // core
+    } else {
+        return 1; // stratiform
+    }
+}
+
+int fill_refl_ALA_grid(Vol_scan *vol, const Point *raincell_center, const Raincell *raincell, const VPR *vpr_1, const VPR *vpr_2) {
+    if (!vol) return -1;
+
+    // Allocate Refl_ALA if needed
+    if (!vol->refl_ALA) {
+        vol->refl_ALA = (double*)malloc(sizeof(double) * vol->num_x * vol->num_y);
+        if (!vol->refl_ALA) {
+            perror("Failed to allocate memory for Refl_ALA");
+            return -1;
+        }
+    }
+
+    // Loop over all grid points
+        for (int x = 0; x < vol->num_x; x++) {
+    for (int y = 0; y < vol->num_y; y++) {
+            int idx = x * vol->num_y + y;
+            //int idx = (vol->num_x - 1 - x) * vol->num_y + y;
+
+            // Compute physical coordinates of this point
+            Point pt;
+            pt.x = vol->ref_point.x + x * vol->resolution;
+            pt.y = vol->ref_point.y + y * vol->resolution;
+
+            //vol->refl_ALA[idx] = classify_point_in_raincell(&pt, raincell_center, raincell);
+        
+	    if ( classify_point_in_raincell(&pt, raincell_center, raincell) == 0) {
+	    	vol->refl_ALA[idx] = 0; 
+	    } else  if ( classify_point_in_raincell(&pt, raincell_center, raincell) == 1) {
+	    	vol->refl_ALA[idx] = vpr_1->CB.reflectivity;
+	    } else  if ( classify_point_in_raincell(&pt, raincell_center, raincell) == 2) {
+	    	vol->refl_ALA[idx] = vpr_2->CB.reflectivity;
+	    }
+	}
+    }
+
+    return 0;
+}
 
 
 
@@ -375,7 +460,44 @@ int write_display_grid_to_file(const Vol_scan *vol, const char *filename) {
 
 
 
+int compute_rainfall_statistics(const Vol_scan *vol, double *mse, double *mae, double *bias) {
+    if (!vol || !vol->display_grid || !vol->refl_ALA || !mse || !mae || !bias) return -1;
 
+    double sum_sq_error = 0.0;
+    double sum_abs_error = 0.0;
+    double sum_error = 0.0;
+    int count = 0;
 
+    for (int i = 0; i < vol->num_elements; i++) {
+        double dBZ_disp = vol->display_grid[i];
+        double dBZ_true = vol->refl_ALA[i];
 
+        // Treat NaN in display grid as 0
+        if (isnan(dBZ_disp)) dBZ_disp = 0.0;
 
+        // Skip if true value is NaN
+        //if (isnan(dBZ_true)) continue;
+
+        // Convert dBZ to linear Z
+        double Z_disp = pow(10.0, dBZ_disp / 10.0);
+        double Z_true = pow(10.0, dBZ_true / 10.0);
+
+        // Marshall-Palmer: R = (Z / 200)^(1/1.6)
+        double R_disp = pow(Z_disp / 200.0, 1.0 / 1.6);
+        double R_true = pow(Z_true / 200.0, 1.0 / 1.6);
+
+        double error = R_disp - R_true;
+        sum_error += error;
+        sum_sq_error += error * error;
+        sum_abs_error += fabs(error);
+        count++;
+    }
+
+    if (count == 0) return -2; // no valid data points
+
+    *mse = sum_sq_error / count;
+    *mae = sum_abs_error / count;
+    *bias = sum_error / count;
+
+    return 0;
+}

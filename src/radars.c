@@ -782,7 +782,7 @@ void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int s
 
 
 
-void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int scan_index, const char* filename) {
+void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int scan_index, double scan_time,const char* filename) {
     FILE* fp = fopen(filename, "a");  // Append mode to handle multiple scans
     if (!fp) {
         perror("Failed to open output file");
@@ -791,7 +791,7 @@ void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int s
     
     fprintf(fp, "=== BEGIN RADAR_SCAN ===\n");
     fprintf(fp, "scan.index=%d\n", scan_index);
-    
+    fprintf(fp,"scan.time=%lf\n", scan_time);
     // Radar metadata
     fprintf(fp, "radar.id=%d\n", radar->id);
     fprintf(fp, "radar.frequency=%s\n", radar->frequency);
@@ -861,6 +861,7 @@ void read_radar_scans(const char* filename) {
 
     // Temporary vars
     int scan_index = 0;
+    double scan_time = 0.0;
     int radar_id = 0;
     char freq[2] = "", mode[4] = "";
     double x=0,y=0,z=0,max_range=0,range_res=0,angular_res=0;
@@ -877,6 +878,7 @@ void read_radar_scans(const char* filename) {
             in_block = 1;
             // Reset vars
             scan_index = radar_id = 0;
+	    scan_time = 0.0;
             freq[0] = '\0'; mode[0] = '\0';
             x = y = z = max_range = range_res = angular_res = 0;
             min_gate = max_gate = min_angle = max_angle = other_angle = 0;
@@ -899,7 +901,8 @@ void read_radar_scans(const char* filename) {
                                               grid_size, other_angle, grid_data,height_size,height_data);
 
             radar_scans[scan_count].scan_index = scan_index;
-            radar_scans[scan_count].radar = radar;
+	    radar_scans[scan_count].time = scan_time;
+	    radar_scans[scan_count].radar = radar;
             radar_scans[scan_count].box = box;
             scan_count++;
 
@@ -912,7 +915,8 @@ void read_radar_scans(const char* filename) {
 
         // Parse lines
         if (sscanf(line, "scan.index=%d", &scan_index)) continue;
-        if (sscanf(line, "radar.id=%d", &radar_id)) continue;
+        if (sscanf(line, "scan.time=%lf", &scan_time)) continue;
+	if (sscanf(line, "radar.id=%d", &radar_id)) continue;
         if (sscanf(line, "radar.frequency=%1s", freq)) continue;
         if (sscanf(line, "radar.scanning_mode=%3s", mode)) continue;
         if (sscanf(line, "radar.x=%lf", &x)) continue;

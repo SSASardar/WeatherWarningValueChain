@@ -9,7 +9,8 @@
 #include "common.h"
 #include <stdio.h>
 #include "vertical_profiles.h"
-
+#include "spatial_coords_raincell.h"
+#include "material_coords_raincell.h"
 
 typedef struct Cart_grid {
 	double resolution;
@@ -35,6 +36,7 @@ typedef struct Vol_scan {
     double *grid_height;    // optional
     double *grid_att;       // optional
     double *display_grid;   // optional, size = num_elements
+double *refl_ALA;       // new field, same size as display_grid
 } Vol_scan;
 
 
@@ -70,4 +72,9 @@ int write_vol_scan_ppi_to_file(const Vol_scan *vol, int ppi_index, const char *f
 
 int compute_display_grid_max(Vol_scan *vol);
 int write_display_grid_to_file(const Vol_scan *vol, const char *filename); 
+int write_true_grid_to_file(const Vol_scan *vol, const char *filename); 
+
+int classify_point_in_raincell(const Point *pt, const Point *raincell_center, const Raincell *raincell); 
+int fill_refl_ALA_grid(Vol_scan *vol, const Point *raincell_center, const Raincell *raincell, const VPR *vpr_1, const VPR *vpr_2);
+int compute_rainfall_statistics(const Vol_scan *vol, double *mse, double *mae, double *bias); 
 #endif /* PROCESSING_H  */

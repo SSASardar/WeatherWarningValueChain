@@ -149,7 +149,7 @@ int sample_from_relative_location_in_raincell(double range, double angle, double
 
 void fill_polar_box_grid(struct Polar_box* box, const struct Radar* radar, const struct Spatial_raincell* s_raincell, const struct Raincell* raincell, double time);
 
-void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int scan_index, const char* filename);
+void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int scan_index,double scan_time, const char* filename);
 
 void read_radar_scans(const char* filename);
 

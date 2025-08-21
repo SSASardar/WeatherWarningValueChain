@@ -19,8 +19,8 @@ int main() {
     printf("Loaded %d radar scans:\n", scan_count);
     for (int i = 0; i < scan_count; ++i) {
         RadarScan* s = &radar_scans[i];
-        printf("Scan %d: Radar ID %d, Grid[0]=%.2f\n",
-               s->scan_index, s->radar->id,
+        printf("Scan %d: TIME in mins (%lf)  Radar ID %d, Grid[0]=%.2f\n",
+               s->scan_index,s->time, s->radar->id,
                s->box->grid ? s->box->grid[65] : -1.0);
     }
 
@@ -35,14 +35,58 @@ int main() {
         return 1;
     }
 
+// defining VPR:
+//
+VPR_params *params = malloc(sizeof(VPR_params));
+init_VPR_params(params);
+fill_VPR_params(params,
+    60.0*60, 120.0*60.0, 170.0*60.0, 200.0*60.0, 230.0*60.0,
+    10.0, 8000.0, 2000.0,        // Echo top
+    50.0, 3.0, 2.0, 2.0,         // Bright band Z
+    3000.0, 100.0, 50.0,         // Bright band heights
+    25.0, 4.0, 3.0,              // Width Z
+    1000.0, 4500.0, 750.0,       // Width H
+    0.4, -0.2, -0.15, -0.05,     // Ratio
+    35, -3.0, 2.0, 20.0,         // Cell base Z
+    500.0, 150.0, 25.0           // Cell base heights
+);
+
+VPR *VPR_strat   = create_and_fill_VPR(params);
+    VPR *VPR_conv  = create_VPR();
+
+    VPR *VPR_A_clima =create_VPR();
+    VPR *VPR_A_gmd  =create_VPR();
+  
+
+    VPR *VPR_A_d = create_VPR();
+
+    VPR *VPR_dummy = create_VPR();
+    
+    double t1,t2, t3, timeB;
+    t1 = params->t_growth_start;
+    t2 = params->t_decay_end;
+    t3 = params->t_mature_end;
+ 
+compute_climatology_VPR(VPR_A_clima,params,60.0,70.0 * 60.0, VPR_dummy); 
+compute_average_VPR(VPR_A_gmd, params, t1, t2, 60.0, VPR_dummy);
+compute_average_VPR(VPR_A_d,   params, t3, t2, 60.0, VPR_dummy);
+
+
+
     int cg_count = 0;
 
     // Step 2: convert Polar_box → Cart_grid
     for (int i = 0; i < scan_count; ++i) {
         Polar_box* p_box = radar_scans[i].box;
         Radar* radar     = radar_scans[i].radar;
+	double time 	 = radar_scans[i].time;
+       //update the convective profile. 
+       
+	update_VPR(VPR_strat, params, time, VPR_conv);
 
-        // Build bounding box
+
+
+	// Build bounding box
         Bounding_box* bbox = bounding_box_from_textfile(p_box, radar);
 
         int num_x = (int)fabs(ceil((bbox->bottomLeft.x)/cart_grid_res) 
@@ -70,9 +114,25 @@ int main() {
 
                 if (getPolarBoxIndex(p, c_x, c_y, p_box, &range_idx, &angle_idx)) {
                     int p_grid_idx = range_idx * (int)(p_box->num_angles) + angle_idx;
-                    cg->grid[idA]         = p_box->grid[p_grid_idx];
                     cg->height_grid[idA]  = p_box->height_grid[p_grid_idx];
-                    cg->attenuation_grid[3*idA+0] = p_box->attenuation_grid[3*p_grid_idx+0];
+                    //cg->grid[idA]         = p_box->grid[p_grid_idx];
+                    
+		    if (p_box->grid[p_grid_idx] == 0) {
+			    cg->grid[idA] = p_box->grid[p_grid_idx];
+		    } else if (p_box->grid[p_grid_idx] == 1) {
+			    cg->grid[idA] = get_reflectivity_at_height(VPR_strat, p_box->height_grid[p_grid_idx]);
+		    } else if (p_box->grid[p_grid_idx] == 2) {
+			   // cg->grid[idA] = get_reflectivity_at_height(VPR_A_d, p_box->height_grid[p_grid_idx]);
+			    cg->grid[idA] = get_reflectivity_at_height(VPR_conv, p_box->height_grid[p_grid_idx]);
+		    }
+
+/*		 if (p_box->grid[p_grid_idx] == 0) {
+			    cg->grid[idA] = p_box->grid[p_grid_idx];
+		    } else {
+			    cg->grid[idA] = get_reflectivity_at_height(VPR_A_clima, p_box->height_grid[p_grid_idx]);
+		    }
+*/		    
+		    cg->attenuation_grid[3*idA+0] = p_box->attenuation_grid[3*p_grid_idx+0];
                     cg->attenuation_grid[3*idA+1] = p_box->attenuation_grid[3*p_grid_idx+1];
                     cg->attenuation_grid[3*idA+2] = p_box->attenuation_grid[3*p_grid_idx+2];
                 } else {
@@ -126,6 +186,46 @@ for (int ppi_idx = 0; ppi_idx < scan_count; ppi_idx++) {
 
 compute_display_grid_max(vol);
 write_display_grid_to_file(vol, "outputs/disp_grid_max.txt");
+
+// calculate true raincell:
+double true_time = radar_scans[scan_count-1].time + ( radar_scans[scan_count-1].time -  radar_scans[scan_count-2].time  );
+   
+    Raincell* raincell = create_raincell(1, 0.5, 10000.0, -0.5, 1000.0, 8000.0, 60.0*60.0, 180.0*60.0, 210.0*60.0, 270.0*60.0);   
+Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
+	
+
+	update_VPR(VPR_strat, params, true_time, VPR_conv);
+
+
+
+
+// initialize your cell, e.g. my_cell.initial_x, my_cell.dx, etc.
+
+Point* raincell_pos = get_position_raincell(true_time, s_raincell);
+if (!raincell_pos) {
+    fprintf(stderr, "Failed to get raincell position\n");
+    exit(EXIT_FAILURE);
+}
+
+if (fill_refl_ALA_grid(vol, raincell_pos, raincell, VPR_strat, VPR_conv) != 0) {
+    fprintf(stderr, "Failed to fill Refl_ALA grid\n");
+}
+
+
+write_true_grid_to_file(vol, "outputs/disp_grid_true.txt");
+
+
+    double mse, mae, bias;
+
+    int ret = compute_rainfall_statistics(vol, &mse, &mae, &bias);
+    if (ret == 0) {
+        printf("MSE: %.5f\n", mse);
+        printf("MAE: %.5f\n", mae);
+        printf("Bias: %.5f\n", bias);
+    } else {
+        printf("Error computing statistics: %d\n", ret);
+    }
+
 
 
     // Step 5: cleanup

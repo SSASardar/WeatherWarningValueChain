@@ -101,6 +101,9 @@ void fill_VPR_params(
     double h_cb_0, double del_h_cb_growth, double del_h_cb_mature
 );
 
+VPR *create_VPR(void);
+
+
 VPR *create_and_fill_VPR(const VPR_params *params);
 
 
@@ -119,5 +122,10 @@ void divideVPR(VPR *vpr, int divisor);
 void cumaddVPR_scale(const VPR *src, VPR *dest, double scale);
 
 void multiplyVPR(VPR *vpr, double scalar);
+
+void compute_average_VPR(VPR *vpr_avg, VPR_params *params,double t_start,double t_end,double dt,VPR *scratch);
+void zeroVPR(VPR *vpr);
+void compute_climatology_VPR(VPR *vpr_clima, VPR_params *params, double dt, double strat_tail, VPR *scratch);
+
 
 #endif // VERTICAL_PROFILES_H

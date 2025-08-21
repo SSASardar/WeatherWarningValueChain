@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "vertical_profiles.h"
 #include <stdlib.h>
-
+#include <string.h>
 // Function to initialize all fields to zero
 void init_VPR_params(VPR_params *params) {
     if (!params) return; // safety check
@@ -69,8 +69,25 @@ void fill_VPR_params(
     params->del_h_cb_growth = del_h_cb_growth;
     params->del_h_cb_mature = del_h_cb_mature;
 }
+/**
+ * Allocate and initialise a new VPR on the heap.
+ *
+ * @return pointer to newly allocated VPR, or NULL on failure.
+ *         Caller is responsible for freeing it with free().
+ */
+VPR *create_VPR(void)
+{
+    VPR *vpr = (VPR *)malloc(sizeof(VPR));
+    if (!vpr) {
+        perror("Failed to allocate VPR");
+        return NULL;
+    }
 
+    // zero all fields (reflectivity + height)
+    memset(vpr, 0, sizeof(VPR));
 
+    return vpr;
+}
 VPR *create_and_fill_VPR(const VPR_params *params) {
     if (!params) {printf("VPR_params is NULL\n");return NULL;}
 
@@ -295,3 +312,120 @@ void multiplyVPR(VPR *vpr, double scalar) {
     vpr->BB_l.reflectivity *= scalar;
     vpr->CB.reflectivity   *= scalar;
 }
+
+
+
+/**
+ * Compute the average vertical profile over a time period.
+ *
+ * @param vpr_avg   Output averaged VPR (must be created with create_and_fill_VPR)
+ * @param params    VPR parameters
+ * @param t_start   Start time (seconds)
+ * @param t_end     End time (seconds)
+ * @param dt        Timestep for sampling (seconds)
+ * @param scratch   Temporary VPR for update (reuse to avoid allocs)
+ *
+ * @return number of samples averaged
+ */
+void compute_average_VPR(VPR *vpr_avg,
+                        VPR_params *params,
+                        double t_start,
+                        double t_end,
+                        double dt,
+                        VPR *scratch)
+{
+    // Reset accumulator
+        zeroVPR(vpr_avg);
+	zeroVPR(scratch);
+    int count = 0;
+    for (double t = t_start; t <= t_end; t += dt) {
+        update_VPR(scratch, params, t, scratch);
+        cumaddVPR(scratch, vpr_avg);
+        count++;
+    }
+
+    if (count > 0) {
+        divideVPR(vpr_avg, count);
+    }
+
+    return;
+}
+
+
+
+
+/**
+ * Reset all fields of a VPR to zero.
+ */
+void zeroVPR(VPR *vpr)
+{
+    if (!vpr) return;
+
+    vpr->ET.reflectivity   = 0.0;
+    vpr->ET.height         = 0.0;
+
+    vpr->BB_u.reflectivity = 0.0;
+    vpr->BB_u.height       = 0.0;
+
+    vpr->BB_m.reflectivity = 0.0;
+    vpr->BB_m.height       = 0.0;
+
+    vpr->BB_l.reflectivity = 0.0;
+    vpr->BB_l.height       = 0.0;
+
+    vpr->CB.reflectivity   = 0.0;
+    vpr->CB.height         = 0.0;
+}
+
+
+/**
+ * Compute climatological average VPR over a raincell life cycle
+ * (growth → mature → decay, plus stratiform tail).
+ *
+ * @param vpr_clima  Output averaged VPR (must be allocated already)
+ * @param params     VPR parameters
+ * @param dt         Timestep for sampling (seconds, e.g. 60.0)
+ * @param strat_tail Extra stratiform duration after decay (seconds, e.g. 70*60)
+ * @param scratch    Temporary VPR (to avoid allocations inside loop)
+ *
+ * @return total number of samples used in the climatological average
+ */
+void compute_climatology_VPR(VPR *vpr_clima,
+                            VPR_params *params,
+                            double dt,
+                            double strat_tail,
+                            VPR *scratch)
+{
+    // Reset accumulator
+    zeroVPR(vpr_clima);
+	zeroVPR(scratch);
+    double t1 = params->t_growth_start;
+    double t2 = params->t_decay_end;
+
+    int count = 0;
+
+    // --- Growth → Decay loop ---
+    for (double t = t1; t <= t2; t += dt) {
+        update_VPR(scratch, params, t, scratch);
+        cumaddVPR(scratch, vpr_clima);
+        count++;
+    }
+
+    // --- Stratiform tail after decay ---
+    int n_tail = (int)(strat_tail / dt);
+    for (int i = 0; i < n_tail; i++) {
+        double t_strat = t1;  // assume stratiform looks like at decay end
+        update_VPR(scratch, params, t_strat, scratch);
+        cumaddVPR(scratch, vpr_clima);
+        count++;
+    }
+
+    // --- Normalize ---
+    if (count > 0) {
+        divideVPR(vpr_clima, count);
+    }
+
+    return;
+}
+
+

@@ -29,6 +29,30 @@ int main() {
     double cart_grid_res = 25.0;
 	int num_x, num_y;
 int target_radar_id = 2;
+
+
+// defining VPR:
+//
+VPR_params *params = malloc(sizeof(VPR_params));
+init_VPR_params(params);
+fill_VPR_params(params,
+    60.0*60, 120.0*60.0, 170.0*60.0, 200.0*60.0, 230.0*60.0,
+    10.0, 8000.0, 2000.0,        // Echo top
+    50.0, 3.0, 2.0, 2.0,         // Bright band Z
+    3000.0, 100.0, 50.0,         // Bright band heights
+    25.0, 4.0, 3.0,              // Width Z
+    1000.0, 4500.0, 750.0,       // Width H
+    0.4, -0.2, -0.15, -0.05,     // Ratio
+    35, -3.0, 2.0, 20.0,         // Cell base Z
+    500.0, 150.0, 25.0           // Cell base heights
+);
+
+VPR *VPR_strat   = create_and_fill_VPR(params);
+
+
+
+
+
 for (int i = 0; i < scan_count; ++i) {
     if (radar_scans[i].radar->id == target_radar_id) {
         Polar_box* p_box = radar_scans[i].box;
@@ -67,8 +91,14 @@ for (int i = 0; i < scan_count; ++i) {
 			p.y = ref_point.y + yi*cart_grid_res;		
 			if (getPolarBoxIndex(p, c_x, c_y, p_box, &range_idx, &angle_idx)) {
 			    int p_grid_idx = range_idx * (int)(p_box->num_angles) + angle_idx;
-			    cg->grid[idA] = p_box->grid[p_grid_idx];
 			    cg->height_grid[idA] = p_box->height_grid[p_grid_idx];
+			    //cg->grid[idA] = p_box->grid[p_grid_idx];
+
+			    if (p_box->grid[p_grid_idx] == 0) {
+			    cg->grid[idA] = p_box->grid[p_grid_idx];
+			    } else {
+			    cg->grid[idA] = get_reflectivity_at_height(VPR_strat, p_box->height_grid[p_grid_idx]);
+			    }
 			    cg->attenuation_grid[3*(idA)+0] =p_box->attenuation_grid[3*p_grid_idx + 0];
 			    cg->attenuation_grid[3*(idA)+1] =p_box->attenuation_grid[3*p_grid_idx + 1];
 			    cg->attenuation_grid[3*(idA)+2] =p_box->attenuation_grid[3*p_grid_idx + 2]; 
@@ -82,7 +112,9 @@ for (int i = 0; i < scan_count; ++i) {
 			}
 		}
 	}
- for (int k = 0; k<3;k++)   writeCartGridToFile(cg,i,k);
+ //for (int k = 0; k<3;k++)   writeCartGridToFile(cg,i,k);
+      writeCartGridToFile(cg,i,0);
+
     }
 
 }
