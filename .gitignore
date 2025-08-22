@@ -5,5 +5,8 @@ docs/
 *.DS_Store
 *.ps
 outputs/
+Aoutputs/
 *.log
 plots/
+archive/
+inputs/

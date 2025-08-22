@@ -19,8 +19,22 @@ typedef struct Spatial_raincell {
 	double dy;
 } Spatial_raincell;
 
+
+
+//global registries:
+
+extern Spatial_raincell* s_raincell_list[MAX_RAINCELLS];
+
+
+
+
+
 // function declarations
 Spatial_raincell* create_spatial_raincell(int d, double intial_x, double intial_y, double velocity);
+
+// Finder function
+const Spatial_raincell* find_spatial_raincell_by_id_ONLY(int idA);
+
 
 void print_spatial_raincell(const Spatial_raincell* s_raincell, double time, const Raincell* raincell);
 
@@ -31,6 +45,10 @@ void free_spatial_raincell(Spatial_raincell* s_raincell);
 Point* get_position_raincell(double time, const Spatial_raincell* cell);
 
 Bounding_box* create_BoundingBox_for_s_raincell(const Spatial_raincell* s_raincell, double time,  const Raincell* raincell);
+
+
+
+
 
 #endif /* SPATIAL_COORDS_RAINCELL_H*/
 

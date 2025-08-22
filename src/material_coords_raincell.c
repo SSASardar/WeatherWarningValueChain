@@ -19,7 +19,7 @@
 
 
 
-
+/*
 // Structure of a raincell
 
 struct Raincell {
@@ -35,6 +35,14 @@ struct Raincell {
 	double onset_time_decay;
 	double stop_time_decay;
 };
+*/
+
+
+//global registries:
+
+Raincell* raincell_list[MAX_RAINCELLS];
+int raincell_count = 0;
+
 
 
 Raincell* create_raincell(int id, double relative_size_core, double radius_stratiform, double relative_offset, double top_height_stratiform,/*  double top_height_core,*/ double max_top_height_core, double onset_time_growth, double stop_time_growth, double onset_time_decay, double stop_time_decay) {
@@ -132,4 +140,16 @@ double raincell_get_top_height_core(const Raincell* raincell, double time) {
     return raincell->time;
 }
 */
+
+
+// Uses the global raincell_list and raincell_count
+const Raincell* find_raincell_by_id_ONLY(int idA) {
+    for (int i = 0; i <raincell_count; ++i) {
+        if (raincell_list[i]->id == idA) {
+            return raincell_list[i];  // Found
+        }
+    }
+    printf("find_raincell_by_id_ONLY()\nRaincell with id %d was not found. Returning NULL\n\n", idA);
+    return NULL; // Not found
+}
 

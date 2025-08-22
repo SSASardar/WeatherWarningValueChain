@@ -27,15 +27,15 @@ const Radar* radars[] = { radar1, radar2 };
     
     for (int ti = 0; ti<16;ti++){
     	  // time = (265.0+(double)ti*(0.3125))*60.0;
-    	   time = (197.5+(double)ti*(0.3125))*60.0;
+    	   time = (180+(double)ti*(0.3125))*60.0;
       	Bounding_box* true_box = create_BoundingBox_for_s_raincell(s_raincell, time, raincell);
 
 
 	// update the elevation angle: 
 	if (ti<8){
-		update_other_angle(box, (double)ti*2.0);
+		update_other_angle(box, (double)ti*2.0*DEG2RAD);
 	} else {
-		update_other_angle(box, ((double)ti-8.0)*2);
+		update_other_angle(box, ((double)ti-8.0)*2*DEG2RAD);
 	}
 
 

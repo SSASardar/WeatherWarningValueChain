@@ -1,7 +1,8 @@
 # Compiler and flags
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -Iinclude
-
+# Enable AddressSanitizer for memory debugging
+ASAN_FLAGS = -fsanitize=address -g -O1
 
 
 # Directories
@@ -45,7 +46,7 @@ tests: $(wildcard $(TEST_DIR)/*.c)
 	@for test_src in $^; do \
 		test_exe="$(BUILD_DIR)/$$(basename $$test_src .c)"; \
 		echo "🔧 Building $$test_src"; \
-		$(CC) $(CFLAGS) $$test_src $(SRC_NO_MAIN) -o $$test_exe || exit 1; \
+		$(CC) $(CFLAGS) $(ASAN_FLAGS) $$test_src $(SRC_NO_MAIN) -o $$test_exe || exit 1; \
 		echo "✅ Running $$test_exe"; \
 		./$$test_exe || exit 1; \
 	done
@@ -70,7 +71,7 @@ ifeq ($(strip $(TEST)),)
 		echo "🔧 Building $$selected_test"; \
 		mkdir -p $(BUILD_DIR); \
 		out_file="$(BUILD_DIR)/$$test_name"; \
-		$(CC) $(CFLAGS) $$selected_test $(SRC_NO_MAIN) -o $$out_file && \
+		$(CC) $(CFLAGS) $(ASAN_FLAGS) $$selected_test $(SRC_NO_MAIN) -o $$out_file && \
 		echo "✅ Running $$out_file"; \
 		./$$out_file; \
 	else \

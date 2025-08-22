@@ -14,7 +14,7 @@
 #include "material_coords_raincell.h"
 #include "common.h"
 #include <ctype.h>
-
+#include <assert.h>
 // Defining a radar
 /*
 struct Radar {
@@ -428,11 +428,11 @@ polar_box->other_angle = 0*DEG2RAD;
     return polar_box;
 }
 
-void update_other_angle(Polar_box* p_box, double new_angle_in_degs){
+void update_other_angle(Polar_box* p_box, double new_angle){
 
 	if(p_box == NULL){printf("in radars.c the updating angle failed because of a NULL polar box\n"); return;}
 
-	p_box->other_angle = new_angle_in_degs*DEG2RAD;
+	p_box->other_angle = new_angle;
 }
 
 int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_raincell, const Radar* radar, const Raincell* raincell) {
@@ -533,6 +533,21 @@ const Radar* find_radar_by_id(const Polar_box* box, const Radar** radars, int nu
     return NULL; // Not found
 
 }
+
+	// Function to find Radar by ID ONLY BY ID!!              
+const Radar* find_radar_by_id_ONLY(int idA) {
+    for (int i = 0; i < radar_count; ++i) {   
+        if (radar_list[i]->id == idA) {
+            return radar_list[i];
+        }
+    }
+    printf("find_radar_by_id_ONLY()\nRadar with id %d was not found. found_radar is allocated to NULL\n\n", idA);
+    return NULL; // Not found
+
+}
+
+
+
 /*
 void print_polar_grid(const Polar_box* box, const Radar** radars, int num_radars) {
 if(box==NULL){printf("polar box not found (points to NULL) in print_polar_grid function.\n\n");}
@@ -632,6 +647,89 @@ return bbox;
 
 }
 
+
+Bounding_box* create_bounding_box_for_polar_box_EZ(const Polar_box* p_box) {
+    if (p_box == NULL) {
+        printf("create_bounding_box_for_polar_box_GLOBAL()\n"
+               "You are trying to create a bounding box for a polar box which is not defined (points to NULL).\n"
+               "The bounding box will be assigned NULL.\n\n");
+        return NULL;
+    }
+
+    // Use global radar registry
+    const Radar* found_radar = find_radar_by_id_ONLY(p_box->radar_id);
+    if (found_radar == NULL) {
+        printf("create_bounding_box_for_polar_box_GLOBAL()\n"
+               "No radar found with id %d. Returning NULL.\n\n", p_box->radar_id);
+        return NULL;
+    }
+
+    double rmin = get_min_range_gate(p_box) * get_range_res_radar(found_radar);
+    double curvature_correction_min = cos(
+        p_box->other_angle + atan2(rmin * cos(p_box->other_angle),
+                                   (KEA + rmin * sin(p_box->other_angle)))
+    );
+
+    double rmax = get_max_range_gate(p_box) * get_range_res_radar(found_radar);
+    double curvature_correction_max = cos(
+        p_box->other_angle + atan2(rmax * cos(p_box->other_angle),
+                                   (KEA + rmax * sin(p_box->other_angle)))
+    );
+
+    double anglemin = get_min_angle(p_box) * DEG2RAD;
+    double anglemax = get_max_angle(p_box) * DEG2RAD;
+    double anglemid = (anglemin + anglemax) / 2;
+
+    double xs[5] = {
+        rmax * curvature_correction_max * cos(anglemin),
+        rmin * curvature_correction_min * cos(anglemin),
+        rmax * curvature_correction_max * cos(anglemax),
+        rmin * curvature_correction_min * cos(anglemax),
+        rmax * curvature_correction_max * cos(anglemid)
+    };
+
+    double ys[5] = {
+        rmax * curvature_correction_max * sin(anglemin),
+        rmin * curvature_correction_min * sin(anglemin),
+        rmax * curvature_correction_max * sin(anglemax),
+        rmin * curvature_correction_min * sin(anglemax),
+        rmax * curvature_correction_max * sin(anglemid)
+    };
+
+    double xmin = xs[0], xmax = xs[0];
+    double ymin = ys[0], ymax = ys[0];
+
+    for (int i = 1; i < 5; ++i) {
+        if (xs[i] < xmin) xmin = xs[i];
+        if (xs[i] > xmax) xmax = xs[i];
+        if (ys[i] < ymin) ymin = ys[i];
+        if (ys[i] > ymax) ymax = ys[i];
+    }
+
+    Point* pos_radar = get_position_radar(found_radar);
+
+    // Allocate and fill the bounding box
+    Bounding_box* bbox = malloc(sizeof(Bounding_box));
+    if (!bbox) {
+        printf("Memory allocation failed for Bounding_box.\n");
+        return NULL;
+    }
+
+    bbox->topLeft.x     = xmin + pos_radar->x;
+    bbox->topLeft.y     = ymax + pos_radar->y;
+    bbox->topRight.x    = xmax + pos_radar->x;
+    bbox->topRight.y    = ymax + pos_radar->y;
+    bbox->bottomLeft.x  = xmin + pos_radar->x;
+    bbox->bottomLeft.y  = ymin + pos_radar->y;
+    bbox->bottomRight.x = xmax + pos_radar->x;
+    bbox->bottomRight.y = ymin + pos_radar->y;
+
+    return bbox;
+}
+
+
+
+
 double calculate_height_of_beam_at_range(double range, double elevation, double height_of_radar){
 	double height_from_earth_centre = (KEA+height_of_radar);
 	double corrected_elevation = elevation + atan2(range*cos(elevation), KEA+range*sin(elevation));
@@ -673,6 +771,83 @@ int sample_from_relative_location_in_raincell(double range, double angle, double
     }
 }
 
+
+/* // ADDRESSING MEMORY LEAK TRY 1
+void fill_polar_box_grid(struct Polar_box* box,
+                         const struct Radar* radar,
+                         const struct Spatial_raincell* s_raincell,
+                         const struct Raincell* raincell,
+                         double time)
+{
+    assert(box != NULL);
+    assert(radar != NULL);
+    assert(s_raincell != NULL);
+    assert(raincell != NULL);
+
+    int num_ranges = (int)get_num_ranges(box);
+    int num_angles = (int)get_num_angles(box);
+
+    assert(num_ranges > 0 && num_angles > 0);
+
+    size_t required_size = (size_t)num_ranges * (size_t)num_angles;
+
+    // Reallocate grid if NULL or not large enough
+    if (box->grid == NULL) {
+        box->grid = (double *)malloc(sizeof(double) * required_size);
+        if (!box->grid) {
+            perror("Failed to allocate memory for polar box grid");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if (box->height_grid == NULL) {
+        box->height_grid = (double *)malloc(sizeof(double) * required_size);
+        if (!box->height_grid) {
+            perror("Failed to allocate memory for polar box height_grid");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // Optional: reallocate if previously allocated size is smaller than required
+    // This assumes you track allocated size in Polar_box (recommended)
+    // if (box->allocated_grid_size < required_size) {
+    //     free(box->grid);
+    //     box->grid = malloc(sizeof(double) * required_size);
+    //     free(box->height_grid);
+    //     box->height_grid = malloc(sizeof(double) * required_size);
+    //     box->allocated_grid_size = required_size;
+    // }
+
+    struct Point* pos_radar = get_position_radar(radar);
+    struct Point* pos_raincell = get_position_raincell(time, s_raincell);
+    double h0 = get_height_of_radar(radar);
+    double r1, a1;
+    double sample_height;
+    int sample;
+printf("num_ranges=%d num_angles=%d allocated_size=%zu\n",
+       num_ranges, num_angles, box->allocated_grid_size);
+    for (int ri = 0; ri < num_ranges; ri++) {
+        r1 = (get_min_range_gate(box) + ri + 0.5) * get_range_res_polar_box(box);
+        sample_height = calculate_height_of_beam_at_range(r1, box->other_angle, h0);
+
+        for (int ai = 0; ai < num_angles; ai++) {
+            a1 = (get_min_angle(box) + (ai + 0.5)) * get_angular_res_polar_box(box);
+            sample = sample_from_relative_location_in_raincell(
+                        r1, a1, box->other_angle, pos_radar, pos_raincell, raincell);
+
+            // Flattened index
+            size_t idx = (size_t)ri * (size_t)num_angles + (size_t)ai;
+            assert(idx < required_size);
+
+            box->grid[idx] = (double)sample;
+            box->height_grid[idx] = sample_height;
+        }
+    }
+}
+
+*/
+
+/*
 void fill_polar_box_grid(struct Polar_box* box,
                          const struct Radar* radar,
                          const struct Spatial_raincell* s_raincell,
@@ -727,7 +902,7 @@ if (box->height_grid == NULL) {
 	}
     }
 }
-
+*/
 /*
 void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int scan_index, const char* filename) {
     FILE* fp = fopen(filename, "a");  // Append mode to handle multiple scans
@@ -1097,4 +1272,25 @@ return bbox;
                                    
                                    
 }                                  
+
+void free_polar_box(Polar_box *box) {
+    if (!box) return;  // Safety check
+
+    if (box->grid) {
+        free(box->grid);
+        box->grid = NULL;
+    }
+
+    if (box->height_grid) {
+        free(box->height_grid);
+        box->height_grid = NULL;
+    }
+
+    if (box->attenuation_grid) {
+        free(box->attenuation_grid);
+        box->attenuation_grid = NULL;
+    }
+
+    free(box);  // Finally, free the struct itself
+}
 

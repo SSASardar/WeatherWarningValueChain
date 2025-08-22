@@ -28,7 +28,7 @@ struct Spatial_raincell {
 };
 */
 
-
+Spatial_raincell* s_raincell_list[MAX_RAINCELLS];
 
 Spatial_raincell* create_spatial_raincell(int id, double initial_x, double initial_y, double velocity) {
 	Spatial_raincell* s_raincell = malloc(sizeof(Spatial_raincell));
@@ -41,6 +41,17 @@ Spatial_raincell* create_spatial_raincell(int id, double initial_x, double initi
 	printf("I just crafted spatial raincell %d\n\n", s_raincell->id);
 
 	return s_raincell;	
+}
+
+// Function to find Spatial_raincell by ID ONLY
+const Spatial_raincell* find_spatial_raincell_by_id_ONLY(int idA) {
+    for (int i = 0; i < raincell_count; ++i) {
+        if (s_raincell_list[i]->id == idA) {
+            return s_raincell_list[i];  // Found
+        }
+    }
+    printf("find_spatial_raincell_by_id_ONLY()\nSpatial_raincell with id %d was not found. Returning NULL\n\n", idA);
+    return NULL; // Not found
 }
 
 

@@ -19,7 +19,7 @@
 struct Cart_grid;
 
 #define MAX_SCANS 1000
-#define MAX_RADARS 100
+#define MAX_RADARS 5
 #define KEA 1.333333333*6371000.0
 
 // Opaque defition of the radar structure
@@ -34,7 +34,8 @@ double range_resolution;
 double angular_resolution;
 } Radar;
 
-typedef struct Polar_box {int radar_id;
+typedef struct Polar_box {
+int radar_id;
 double min_range_gate;
 double max_range_gate;
 double min_angle;
@@ -99,7 +100,7 @@ Polar_box* create_polar_box(
 
 
 Polar_box* init_polar_box();
-void update_other_angle(Polar_box* p_box, double new_angle_in_degs);
+void update_other_angle(Polar_box* p_box, double new_angle);
 int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_raincell, const Radar* radar, const Raincell* raincell);
 
 void print_radar_specs(const Radar* radar);
@@ -139,8 +140,9 @@ double get_angular_res_polar_box(const struct Polar_box* box);
 
 
 const Radar* find_radar_by_id(const Polar_box* box, const Radar** radars, int num_radars);
-
+const Radar* find_radar_by_id_ONLY(int idA);
 Bounding_box* create_bounding_box_for_polar_box(const Polar_box* p_box, const Radar** radars, int num_radars);
+Bounding_box* create_bounding_box_for_polar_box_EZ(const Polar_box* p_box);
 
 double calculate_height_of_beam_at_range(double range, double elevation, double height_of_radar);
 
@@ -154,5 +156,10 @@ void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int s
 void read_radar_scans(const char* filename);
 
 Bounding_box* bounding_box_from_textfile(const Polar_box* p_box, const Radar* radar);
+
+
+//FREEING STUFF
+
+void free_polar_box(Polar_box *box);
 
 #endif /* RADARS_H */
