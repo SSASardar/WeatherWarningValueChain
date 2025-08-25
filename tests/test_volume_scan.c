@@ -20,21 +20,34 @@ int main() {
     printf("Loaded %d radar scans:\n", scan_count);
     for (int i = 0; i < scan_count; ++i) {
         RadarScan* s = &radar_scans[i];
-        printf("Scan %d: TIME in mins (%lf)  Radar ID %d, Grid[0]=%.2f\n",
+/*        printf("Scan %d: TIME in mins (%lf)  Radar ID %d, Grid[0]=%.2f\n",
                s->scan_index,s->time, s->radar->id,
                s->box->grid ? s->box->grid[65] : -1.0);
-    }
+  */  }
 
     // -------------------------------
     // Define Cartesian grid resolution
     double cart_grid_res = 25;
-
+/*
     // Step 1: allocate space for Cart_grids
     Cart_grid *cart_grids = malloc(scan_count * sizeof(Cart_grid));
     if (!cart_grids) {
         fprintf(stderr, "Failed to allocate cart_grids\n");
         return 1;
     }
+*/
+
+
+
+Cart_grid **cart_grids = malloc(scan_count * sizeof(Cart_grid*));
+if (!cart_grids) {
+    fprintf(stderr, "Failed to allocate cart_grids array\n");
+    return 1;
+}
+
+
+
+
 
 // defining VPR:
 //
@@ -146,7 +159,7 @@ compute_average_VPR(VPR_A_d,   params, t3, t2, 60.0, VPR_dummy);
             }
         }
 
-        cart_grids[cg_count++] = *cg;
+        cart_grids[cg_count++] = cg;
     }
 
     // Step 3: initialize Vol_scan (once you have all Cart_grids)
@@ -158,7 +171,7 @@ compute_average_VPR(VPR_A_d,   params, t3, t2, 60.0, VPR_dummy);
 
     // Step 4: add each Cart_grid into the Vol_scan
     for (int i = 0; i < cg_count; i++) {
-        add_cart_grid_to_volscan(vol, &cart_grids[i], i);
+        add_cart_grid_to_volscan(vol, cart_grids[i], i);
     }
 
     printf("Volume scan created: %d PPIs, %d x %d grid, %d elements\n",
@@ -185,8 +198,15 @@ for (int ppi_idx = 0; ppi_idx < scan_count; ppi_idx++) {
 */
 
 
-compute_display_grid_max(vol);
+//compute_display_grid_mean(vol,10.0);
+//write_display_grid_to_file(vol, "outputs/disp_grid_mean.txt");
+//compute_display_grid_min_above_threshold(vol,10.0);
+//write_display_grid_to_file(vol, "outputs/disp_grid_RALA.txt");
+
+compute_display_grid_max(vol,10.0);
 write_display_grid_to_file(vol, "outputs/disp_grid_max.txt");
+
+
 
 // calculate true raincell:
 double true_time = radar_scans[scan_count-1].time + ( radar_scans[scan_count-1].time -  radar_scans[scan_count-2].time  );
@@ -207,6 +227,8 @@ if (!raincell_pos) {
     fprintf(stderr, "Failed to get raincell position\n");
     exit(EXIT_FAILURE);
 }
+//printf("Raincell position: x=%f, y=%f\n", raincell_pos->x, raincell_pos->y);
+
 
 if (fill_refl_ALA_grid(vol, raincell_pos, raincell, VPR_strat, VPR_conv) != 0) {
     fprintf(stderr, "Failed to fill Refl_ALA grid\n");
@@ -228,10 +250,18 @@ write_true_grid_to_file(vol, "outputs/disp_grid_true.txt");
     }
 
 
-
+/*
     // Step 5: cleanup
     free_vol_scan(vol);
     free(cart_grids);
+*/
+
+for (int i = 0; i < cg_count; i++) {
+    free_cart_grid(cart_grids[i]);
+}
+free(cart_grids);
+
+free_vol_scan(vol);
 
     clock_t end = clock();
     printf("Time taken: %f seconds\n", (double)(end - start) / CLOCKS_PER_SEC);

@@ -38,7 +38,7 @@ Spatial_raincell* create_spatial_raincell(int id, double initial_x, double initi
 	s_raincell->dx = velocity;
 	s_raincell->dy = 0;
 
-	printf("I just crafted spatial raincell %d\n\n", s_raincell->id);
+//	printf("I just crafted spatial raincell %d\n\n", s_raincell->id);
 
 	return s_raincell;	
 }
@@ -85,9 +85,9 @@ void print_path_spatial_raincell(const Spatial_raincell* s_raincell){
 void free_spatial_raincell(Spatial_raincell* s_raincell){
 	int id_d = s_raincell->id;
 	free(s_raincell);
-	printf("I just obliterated (freed) spatial raincell %d\n\n", id_d);
+//	printf("I just obliterated (freed) spatial raincell %d\n\n", id_d);
 }
-
+/*
 Point* get_position_raincell(double time, const Spatial_raincell* cell) {
 	Point* point = malloc(sizeof(Point));
     if (cell) {
@@ -96,7 +96,25 @@ Point* get_position_raincell(double time, const Spatial_raincell* cell) {
     }
     return point;
 }
+*/
 
+Point* get_position_raincell(double time, const Spatial_raincell* cell) {
+    if (!cell) {
+        fprintf(stderr, "get_position_raincell: NULL cell provided\n");
+        return NULL;
+    }
+
+    Point* point = malloc(sizeof(Point));
+    if (!point) {
+        perror("malloc failed in get_position_raincell");
+        return NULL;
+    }
+
+    point->x = cell->initial_x + time * cell->dx;
+    point->y = cell->initial_y + time * cell->dy;
+
+    return point;
+}
 
 Bounding_box* create_BoundingBox_for_s_raincell(const Spatial_raincell* s_raincell, double time, const Raincell* raincell){
 	Bounding_box* bounding_box = malloc(sizeof(Bounding_box));

@@ -60,7 +60,7 @@ Raincell* create_raincell(int id, double relative_size_core, double radius_strat
 	raincell->onset_time_decay = onset_time_decay;
 	raincell->stop_time_decay = stop_time_decay;
 	
-	printf("\nI just crafted raincell %d\n", raincell->id);
+//	printf("\nI just crafted raincell %d\n", raincell->id);
 	return raincell;
 
 }
@@ -80,7 +80,7 @@ printf("\n\nThe phases of the raincell development happen at the following times
 void free_raincell(Raincell* raincell){
 	int id_d = raincell->id;
 	free(raincell);
-	printf("I just freed raincell %d\n\n", id_d);
+//	printf("I just freed raincell %d\n\n", id_d);
 }
 
 // Getters for Raincell fields

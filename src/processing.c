@@ -167,7 +167,7 @@ void generate_attenuation_grid(Cartesian_grid* cg) {
 
 }
 */
-Vol_scan *init_vol_scan(Cart_grid *cart_grids, int num_PPIs) {
+/*Vol_scan *init_vol_scan(Cart_grid *cart_grids, int num_PPIs) {
     if (!cart_grids || num_PPIs <= 0) return NULL;
 
     Vol_scan *vol = (Vol_scan *)malloc(sizeof(Vol_scan));
@@ -214,6 +214,68 @@ Vol_scan *init_vol_scan(Cart_grid *cart_grids, int num_PPIs) {
         vol->grid_refl[i] = NAN;
         vol->grid_height[i] = NAN;
         vol->grid_att[i] = NAN;
+    }
+
+    return vol;
+}
+*/
+
+
+
+Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs) {
+    if (!cart_grids || num_PPIs <= 0) return NULL;
+
+    Vol_scan *vol = (Vol_scan *)malloc(sizeof(Vol_scan));
+    if (!vol) return NULL;
+
+    vol->num_PPIs = num_PPIs;
+
+    double min_x = DBL_MAX, min_y = DBL_MAX;
+    double max_x = -DBL_MAX, max_y = -DBL_MAX;
+
+    for (int i = 0; i < num_PPIs; i++) {
+        Cart_grid *g = cart_grids[i];
+        if (!g) continue;
+
+        if (g->ref_point.x < min_x) min_x = g->ref_point.x;
+        if (g->ref_point.y < min_y) min_y = g->ref_point.y;
+        double g_max_x = g->ref_point.x + g->resolution * (g->num_x - 1);
+        double g_max_y = g->ref_point.y + g->resolution * (g->num_y - 1);
+        if (g_max_x > max_x) max_x = g_max_x;
+        if (g_max_y > max_y) max_y = g_max_y;
+    }
+
+    vol->ref_point.x = min_x;
+    vol->ref_point.y = min_y;
+
+    double res = cart_grids[0]->resolution;
+    vol->num_x = (int)ceil((max_x - min_x) / res) + 1;
+    vol->num_y = (int)ceil((max_y - min_y) / res) + 1;
+    vol->num_elements = vol->num_x * vol->num_y;
+
+    vol->resolution  = res;
+
+    vol->grid_refl    = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
+    vol->grid_height  = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
+    vol->grid_att     = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
+    vol->display_grid = (double *)calloc(vol->num_elements, sizeof(double));
+    vol->refl_ALA     = (double *)calloc(vol->num_elements, sizeof(double));
+
+    if (!vol->grid_refl || !vol->grid_height || !vol->grid_att || !vol->display_grid || !vol->refl_ALA) {
+        free(vol->grid_refl); free(vol->grid_height); free(vol->grid_att);
+        free(vol->display_grid); free(vol->refl_ALA); free(vol);
+        return NULL;
+    }
+
+    for (int i = 0; i < vol->num_elements * num_PPIs; i++) {
+        vol->grid_refl[i]   = NAN;
+        vol->grid_height[i] = NAN;
+        vol->grid_att[i]    = NAN;
+    }
+
+    for (int i = 0; i < vol->num_elements; i++) {
+        vol->display_grid[i] = NAN;
+        vol->refl_ALA[i]     = NAN;
     }
 
     return vol;
@@ -317,7 +379,7 @@ int write_vol_scan_ppi_to_file(const Vol_scan *vol, int ppi_index, const char *f
 }
 
 
-int compute_display_grid_max(Vol_scan *vol) {
+int compute_display_grid_max(Vol_scan *vol, double threshold) {
     if (!vol) return -1;
 
         for (int x = 0; x < vol->num_x; x++) {
@@ -336,8 +398,62 @@ int compute_display_grid_max(Vol_scan *vol) {
                     }
                 }
             }
+vol->display_grid[base_idx] = (!found || max_val < threshold) ? NAN : max_val;
+        }
+    }
 
-            vol->display_grid[base_idx] = found ? max_val : NAN;
+    return 0;
+}
+
+
+
+int compute_display_grid_mean(Vol_scan *vol, double threshold) {
+    if (!vol) return -1;
+
+    for (int x = 0; x < vol->num_x; x++) {
+        for (int y = 0; y < vol->num_y; y++) {
+            int base_idx = x * vol->num_y + y;  // index into display_grid
+            double sum_val = 0.0;
+            int count = 0;
+
+            for (int ppi = 0; ppi < vol->num_PPIs; ppi++) {
+                int idx = vol_index(vol, x, y, ppi);
+                double refl = vol->grid_refl[idx];
+                if (!isnan(refl)) {
+                    sum_val += refl;
+                    count++;
+                }
+            }
+double avg = (count > 0) ? (sum_val / count) : NAN;
+vol->display_grid[base_idx] = (count == 0 || avg < threshold) ? NAN : avg;
+        }
+    }
+
+    return 0;
+}
+
+int compute_display_grid_min_above_threshold(Vol_scan *vol, double threshold) {
+    if (!vol) return -1;
+
+    for (int x = 0; x < vol->num_x; x++) {
+        for (int y = 0; y < vol->num_y; y++) {
+            int base_idx = x * vol->num_y + y;  // index into display_grid
+            double min_val = INFINITY;
+            int found = 0;
+
+            for (int ppi = 0; ppi < vol->num_PPIs; ppi++) {
+                int idx = vol_index(vol, x, y, ppi);
+                double refl = vol->grid_refl[idx];
+
+                if (!isnan(refl) && refl > threshold) {
+                    if (!found || refl < min_val) {
+                        min_val = refl;
+                        found = 1;
+                    }
+                }
+            }
+
+            vol->display_grid[base_idx] = found ? min_val : NAN;
         }
     }
 
@@ -414,7 +530,7 @@ int classify_point_in_raincell(const Point *pt, const Point *raincell_center, co
         return 1; // stratiform
     }
 }
-
+/*
 int fill_refl_ALA_grid(Vol_scan *vol, const Point *raincell_center, const Raincell *raincell, const VPR *vpr_1, const VPR *vpr_2) {
     if (!vol) return -1;
 
@@ -452,13 +568,79 @@ int fill_refl_ALA_grid(Vol_scan *vol, const Point *raincell_center, const Raince
 
     return 0;
 }
+*/
+
+int fill_refl_ALA_grid(Vol_scan *vol,
+                       const Point *raincell_center,
+                       const Raincell *raincell,
+                       const VPR *vpr_1,
+                       const VPR *vpr_2)
+{
+    if (!vol) {
+        fprintf(stderr, "fill_refl_ALA_grid: NULL volume\n");
+        return -1;
+    }
+
+    if (!raincell_center) {
+        fprintf(stderr, "fill_refl_ALA_grid: NULL raincell_center pointer\n");
+        return -2;
+    }
+
+    if (!raincell) {
+        fprintf(stderr, "fill_refl_ALA_grid: NULL raincell struct\n");
+        return -3;
+    }
+
+    if (!vpr_1 || !vpr_2) {
+        fprintf(stderr, "fill_refl_ALA_grid: NULL VPR profile(s)\n");
+        return -4;
+    }
+
+    // Allocate memory for refl_ALA if not already done
+    if (!vol->refl_ALA) {
+        size_t n = (size_t)vol->num_x * (size_t)vol->num_y;
+        vol->refl_ALA = (double*)malloc(n * sizeof(double));
+        if (!vol->refl_ALA) {
+            perror("Failed to allocate memory for Refl_ALA");
+            return -5;
+        }
+    }
+
+    // DEBUG sanity check: print raincell position
+    fprintf(stderr, "Raincell center at x=%.2f, y=%.2f\n",
+            raincell_center->x, raincell_center->y);
+
+    // Fill grid
+    for (int x = 0; x < vol->num_x; x++) {
+        for (int y = 0; y < vol->num_y; y++) {
+            int idx = x * vol->num_y + y;
+
+            Point pt;
+            pt.x = vol->ref_point.x + x * vol->resolution;
+            pt.y = vol->ref_point.y + y * vol->resolution;
+
+            int cls = classify_point_in_raincell(&pt, raincell_center, raincell);
+
+            if (cls == 0) {
+                vol->refl_ALA[idx] = 0.0;
+            } else if (cls == 1) {
+                vol->refl_ALA[idx] = vpr_1->CB.reflectivity;
+            } else if (cls == 2) {
+                vol->refl_ALA[idx] = vpr_2->CB.reflectivity;
+            } else {
+                vol->refl_ALA[idx] = NAN; // unexpected classification
+            }
+        }
+    }
+
+    return 0;
+}
 
 
 
 
 
-
-
+/*
 
 int compute_rainfall_statistics(const Vol_scan *vol, double *mse, double *mae, double *bias) {
     if (!vol || !vol->display_grid || !vol->refl_ALA || !mse || !mae || !bias) return -1;
@@ -477,6 +659,59 @@ int compute_rainfall_statistics(const Vol_scan *vol, double *mse, double *mae, d
 
         // Skip if true value is NaN
         //if (isnan(dBZ_true)) continue;
+
+        // Convert dBZ to linear Z
+        double Z_disp = pow(10.0, dBZ_disp / 10.0);
+        double Z_true = pow(10.0, dBZ_true / 10.0);
+
+        // Marshall-Palmer: R = (Z / 200)^(1/1.6)
+        double R_disp = pow(Z_disp / 200.0, 1.0 / 1.6);
+        double R_true = pow(Z_true / 200.0, 1.0 / 1.6);
+
+        double error = R_disp - R_true;
+        sum_error += error;
+        sum_sq_error += error * error;
+        sum_abs_error += fabs(error);
+        count++;
+    }
+
+    if (count == 0) return -2; // no valid data points
+
+    *mse = sum_sq_error / count;
+    *mae = sum_abs_error / count;
+    *bias = sum_error / count;
+
+    return 0;
+}
+*/
+
+void free_cart_grid(Cart_grid *cg) {
+    if (!cg) return;
+    free(cg->grid);
+    free(cg->height_grid);
+    free(cg->attenuation_grid);
+    free(cg);
+}
+
+
+
+int compute_rainfall_statistics(const Vol_scan *vol, double threshold, double *mse, double *mae, double *bias) {
+    if (!vol || !vol->display_grid || !vol->refl_ALA || !mse || !mae || !bias) return -1;
+
+    double sum_sq_error = 0.0;
+    double sum_abs_error = 0.0;
+    double sum_error = 0.0;
+    int count = 0;
+
+    for (int i = 0; i < vol->num_elements; i++) {
+        double dBZ_disp = vol->display_grid[i];
+        double dBZ_true = vol->refl_ALA[i];
+
+        // Skip if either value is NaN
+        if (isnan(dBZ_disp) || isnan(dBZ_true)) continue;
+
+        // Skip if display value below threshold
+        if (dBZ_disp < threshold) continue;
 
         // Convert dBZ to linear Z
         double Z_disp = pow(10.0, dBZ_disp / 10.0);

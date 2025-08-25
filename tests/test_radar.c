@@ -27,7 +27,7 @@ const Radar* radars[] = { radar1, radar2 };
     
     for (int ti = 0; ti<16;ti++){
     	  // time = (265.0+(double)ti*(0.3125))*60.0;
-    	   time = (180+(double)ti*(0.3125))*60.0;
+    	   time = (200.0+(double)ti*(0.3125))*60.0;
       	Bounding_box* true_box = create_BoundingBox_for_s_raincell(s_raincell, time, raincell);
 
 

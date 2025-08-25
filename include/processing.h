@@ -56,7 +56,7 @@ bool getPolarBoxIndex(Point p, double c_x, double c_y,const Polar_box* box, int 
 
 void writeCartGridToFile(Cart_grid* cg, int scan_id, int what_to_print); 
 
-Vol_scan *init_vol_scan(Cart_grid *cart_grids, int num_PPIs);
+Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs);
 
 static inline int vol_index(const Vol_scan *vol, int x, int y, int ppi) {
     return ppi * vol->num_elements + x * vol->num_y + y;
@@ -70,11 +70,16 @@ void free_vol_scan(Vol_scan *vol);
 int write_vol_scan_ppi_to_file(const Vol_scan *vol, int ppi_index, const char *filename);
 
 
-int compute_display_grid_max(Vol_scan *vol);
+int compute_display_grid_max(Vol_scan *vol, double threshold);
+int compute_display_grid_mean(Vol_scan *vol, double threshold);
+int compute_display_grid_min_above_threshold(Vol_scan *vol, double threshold); 
+
 int write_display_grid_to_file(const Vol_scan *vol, const char *filename); 
 int write_true_grid_to_file(const Vol_scan *vol, const char *filename); 
 
 int classify_point_in_raincell(const Point *pt, const Point *raincell_center, const Raincell *raincell); 
 int fill_refl_ALA_grid(Vol_scan *vol, const Point *raincell_center, const Raincell *raincell, const VPR *vpr_1, const VPR *vpr_2);
-int compute_rainfall_statistics(const Vol_scan *vol, double *mse, double *mae, double *bias); 
+int compute_rainfall_statistics(const Vol_scan *vol, double threshold, double *mse, double *mae, double *bias); 
+
+void free_cart_grid(Cart_grid *cg);
 #endif /* PROCESSING_H  */
