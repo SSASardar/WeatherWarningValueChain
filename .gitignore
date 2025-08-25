@@ -10,3 +10,15 @@ Aoutputs/
 plots/
 archive/
 inputs/
+
+
+
+# Xcode
+*.xcworkspace
+*.xcuserdata
+*.xcodeproj/project.xcworkspace
+*.xcodeproj/xcuserdata
+*.xcodeproj/project.pbxproj
+
+# Swap files
+*.swp

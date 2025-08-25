@@ -434,7 +434,7 @@ void update_other_angle(Polar_box* p_box, double new_angle){
 
 	p_box->other_angle = new_angle;
 }
-
+/*
 int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_raincell, const Radar* radar, const Raincell* raincell) {
     if (!polar_box) return -1;
 
@@ -475,8 +475,8 @@ int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_
     polar_box->min_angle = floor((angle - del_angle) / angular_resolution);
     polar_box->max_angle = ceil((angle + del_angle) / angular_resolution);
 
-    polar_box->num_ranges = polar_box->max_range_gate - polar_box->min_range_gate;
-    polar_box->num_angles = polar_box->max_angle - polar_box->min_angle;
+    polar_box->num_ranges = ceil(polar_box->max_range_gate - polar_box->min_range_gate);
+    polar_box->num_angles = ceil(polar_box->max_angle - polar_box->min_angle);
 
     free(centre);
     free(radar_point);
@@ -484,8 +484,182 @@ int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_
     return 0; // success
 }
 
+*/
+/*
+int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_raincell, const Radar* radar, const Raincell* raincell) {
+    if (!polar_box) return -1;
 
+    if (strcmp(get_scanning_mode(radar), "PPI") != 0) {
+        printf("fill_polar_box:\nAt simulation time %.2lf you are trying to fill a polar box for a %s\nPolar box NOT updated.\n\n", time, get_scanning_mode(radar));
+        return -1;
+    }
 
+    // Earth 4/3 mean earth model
+    double kea_and_radar = KEA + radar->z;
+
+    Point* centre = get_position_raincell(time, s_raincell);
+    Point* radar_point = get_position_radar(radar);
+
+    double diff_x = centre->x - radar_point->x;
+    double diff_y = centre->y - radar_point->y;
+    double dist_s = sqrt(diff_x * diff_x + diff_y * diff_y);
+    double dist = sin(dist_s / kea_and_radar) * kea_and_radar / cos(polar_box->other_angle);
+    double radius_stratiform = raincell_get_radius_stratiform(raincell);
+
+    polar_box->range_resolution = get_range_res_radar(radar);
+    double range_resolution = polar_box->range_resolution;
+
+    double angle = atan2(diff_y, diff_x);
+    if (angle < 0) angle += 2 * M_PI;
+    angle = angle * RAD2DEG;
+
+    double del_angle = atan2(radius_stratiform, dist) * RAD2DEG;
+
+    polar_box->angular_resolution = get_angular_res_radar(radar);
+    double angular_resolution = polar_box->angular_resolution;
+
+    polar_box->radar_id = get_radar_id(radar);
+
+    polar_box->min_range_gate = floor((sin((dist_s - radius_stratiform) / kea_and_radar) * kea_and_radar / cos(polar_box->other_angle)) / range_resolution);
+    polar_box->max_range_gate = ceil((sin((dist_s + radius_stratiform) / kea_and_radar) * kea_and_radar / cos(polar_box->other_angle)) / range_resolution);
+
+    polar_box->min_angle = floor((angle - del_angle) / angular_resolution);
+    polar_box->max_angle = ceil((angle + del_angle) / angular_resolution);
+
+    // Ensure at least 1 range and 1 angle
+    polar_box->num_ranges = (double)fmax(1, ceil(polar_box->max_range_gate - polar_box->min_range_gate));
+    polar_box->num_angles = (double)fmax(1, ceil(polar_box->max_angle - polar_box->min_angle));
+
+    free(centre);
+    free(radar_point);
+
+    return 0; // success
+}
+*/
+/*
+// ---------------------- Fill Polar Box --------CONSTANT SIZES!!!! WRONG--------------
+int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_raincell, const Radar* radar, const Raincell* raincell) {
+    if (!polar_box || !radar || !raincell || !s_raincell) return -1;
+
+    if (strcmp(get_scanning_mode(radar), "PPI") != 0) {
+        printf("fill_polar_box: Not a PPI scan at time %.2lf\n", time);
+        return -1;
+    }
+
+    double kea_and_radar = KEA + radar->z;
+
+    Point* centre = get_position_raincell(time, s_raincell);
+    Point* radar_point = get_position_radar(radar);
+
+    double diff_x = centre->x - radar_point->x;
+    double diff_y = centre->y - radar_point->y;
+    double dist_s = sqrt(diff_x * diff_x + diff_y * diff_y);
+    double dist = sin(dist_s / kea_and_radar) * kea_and_radar / cos(polar_box->other_angle);
+    double radius_stratiform = raincell_get_radius_stratiform(raincell);
+
+    double angle = atan2(diff_y, diff_x);
+    if (angle < 0) angle += 2 * M_PI;
+    angle = angle * RAD2DEG;
+
+    double del_angle = atan2(radius_stratiform, dist) * RAD2DEG;
+
+    polar_box->range_resolution = get_range_res_radar(radar);
+    polar_box->angular_resolution = get_angular_res_radar(radar);
+    polar_box->radar_id = get_radar_id(radar);
+
+    // Compute min/max range gates and angles
+    int min_range_idx = (int)floor((dist_s - radius_stratiform) / polar_box->range_resolution);
+    int max_range_idx = (int)ceil((dist_s + radius_stratiform) / polar_box->range_resolution);
+    int min_angle_idx = (int)floor((angle - del_angle) / polar_box->angular_resolution);
+    int max_angle_idx = (int)ceil((angle + del_angle) / polar_box->angular_resolution);
+
+    // Clip to safe non-negative bounds
+    if (min_range_idx < 0) min_range_idx = 0;
+    if (min_angle_idx < 0) min_angle_idx = 0;
+    if (max_range_idx <= min_range_idx) max_range_idx = min_range_idx + 1;
+    if (max_angle_idx <= min_angle_idx) max_angle_idx = min_angle_idx + 1;
+
+    polar_box->min_range_gate = min_range_idx;
+    polar_box->max_range_gate = max_range_idx;
+    polar_box->min_angle = min_angle_idx;
+    polar_box->max_angle = max_angle_idx;
+
+    polar_box->num_ranges = max_range_idx - min_range_idx;
+    polar_box->num_angles = max_angle_idx - min_angle_idx;
+
+    free(centre);
+    free(radar_point);
+
+    return 0;
+}
+*/
+
+int fill_polar_box(Polar_box* polar_box, double time,
+                   const Spatial_raincell* s_raincell,
+                   const Radar* radar, const Raincell* raincell) {
+    if (!polar_box || !radar || !s_raincell || !raincell) return -1;
+
+    if (strcmp(get_scanning_mode(radar), "PPI") != 0) {
+        printf("fill_polar_box: Unsupported scan mode %s\n", get_scanning_mode(radar));
+        return -1;
+    }
+
+    double kea_and_radar = KEA + radar->z;
+
+    Point* centre = get_position_raincell(time, s_raincell);
+    Point* radar_point = get_position_radar(radar);
+
+    double diff_x = centre->x - radar_point->x;
+    double diff_y = centre->y - radar_point->y;
+    double dist_s = sqrt(diff_x * diff_x + diff_y * diff_y);
+    double dist = sin(dist_s / kea_and_radar) * kea_and_radar / cos(polar_box->other_angle);
+    double radius_stratiform = raincell_get_radius_stratiform(raincell);
+
+    polar_box->range_resolution = get_range_res_radar(radar);
+    polar_box->angular_resolution = get_angular_res_radar(radar);
+
+    double angle = atan2(diff_y, diff_x);
+    if (angle < 0) angle += 2 * M_PI;
+    angle = angle * RAD2DEG;
+
+    double del_angle = atan2(radius_stratiform, dist) * RAD2DEG;
+
+    polar_box->radar_id = get_radar_id(radar);
+
+    // Compute min/max gates and angles
+    polar_box->min_range_gate = floor((sin((dist_s - radius_stratiform)/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
+    polar_box->max_range_gate = ceil((sin((dist_s + radius_stratiform)/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
+
+    polar_box->min_angle = floor((angle - del_angle) / polar_box->angular_resolution);
+    polar_box->max_angle = ceil((angle + del_angle) / polar_box->angular_resolution);
+
+    // Dynamically compute sizes
+    int num_ranges = (int)(polar_box->max_range_gate - polar_box->min_range_gate + 1);
+    int num_angles = (int)(polar_box->max_angle - polar_box->min_angle + 1);
+
+    // Only reallocate if size changed or not allocated yet
+    if (!polar_box->grid || (int)polar_box->num_ranges != num_ranges || (int)polar_box->num_angles != num_angles) {
+        free(polar_box->grid);
+        free(polar_box->height_grid);
+
+        polar_box->grid = malloc(sizeof(double) * num_ranges * num_angles);
+        polar_box->height_grid = malloc(sizeof(double) * num_ranges * num_angles);
+        if (!polar_box->grid || !polar_box->height_grid) {
+            perror("Failed to allocate polar box grids");
+            free(centre);
+            free(radar_point);
+            return -1;
+        }
+    }
+
+    polar_box->num_ranges = num_ranges;
+    polar_box->num_angles = num_angles;
+
+    free(centre);
+    free(radar_point);
+
+    return 0;
+}
 int get_radar_id_for_polar_box(const struct Polar_box* box) {
     return box->radar_id;
 }
@@ -770,7 +944,142 @@ int sample_from_relative_location_in_raincell(double range, double angle, double
         return 1; // Inside stratiform region
     }
 }
+void fill_polar_box_grid(Polar_box* box, const Radar* radar,
+                         const Spatial_raincell* s_raincell, const Raincell* raincell,
+                         double time) {
+    if (!box || !radar || !s_raincell || !raincell) return;
 
+    int num_ranges = (int)box->num_ranges;
+    int num_angles = (int)box->num_angles;
+// Ensure the struct matches actual allocated sizes
+box->num_ranges = num_ranges;
+box->num_angles = num_angles;
+    Point* pos_radar = get_position_radar(radar);
+    Point* pos_raincell = get_position_raincell(time, s_raincell);
+    double h0 = get_height_of_radar(radar);
+
+    for (int ri = 0; ri < num_ranges; ri++) {
+        double r1 = (box->min_range_gate + ri + 0.5) * box->range_resolution;
+        double sample_height = calculate_height_of_beam_at_range(r1, box->other_angle, h0);
+
+        for (int ai = 0; ai < num_angles; ai++) {
+            double a1 = (box->min_angle + ai + 0.5) * box->angular_resolution;
+            int sample = sample_from_relative_location_in_raincell(r1, a1, box->other_angle, pos_radar, pos_raincell, raincell);
+
+            // Flattened grid write
+            box->grid[ri * num_angles + ai] = (double)sample;
+            box->height_grid[ri * num_angles + ai] = sample_height;
+        }
+    }
+
+    free(pos_radar);
+    free(pos_raincell);
+}
+
+
+/*
+
+// ---------------------- Fill Polar Box Grid -------------CONSTANT SIZES!!!!!!!!!!!! WRONG---------
+void fill_polar_box_grid(Polar_box* box,
+                         const Radar* radar,
+                         const Spatial_raincell* s_raincell,
+                         const Raincell* raincell,
+                         double time)
+{
+    if (!box || !radar || !s_raincell || !raincell) return;
+
+    int num_ranges = box->num_ranges;
+    int num_angles = box->num_angles;
+
+    if (!box->grid) {
+        box->grid = malloc(sizeof(double) * num_ranges * num_angles);
+        if (!box->grid) { perror("Failed to allocate polar box grid"); exit(EXIT_FAILURE); }
+    }
+
+    if (!box->height_grid) {
+        box->height_grid = malloc(sizeof(double) * num_ranges * num_angles);
+        if (!box->height_grid) { perror("Failed to allocate polar box height_grid"); exit(EXIT_FAILURE); }
+    }
+
+    Point* pos_radar = get_position_radar(radar);
+    Point* pos_raincell = get_position_raincell(time, s_raincell);
+    double h0 = get_height_of_radar(radar);
+
+    for (int ri = 0; ri < num_ranges; ri++) {
+        double r1 = (box->min_range_gate + ri + 0.5) * box->range_resolution;
+        double sample_height = calculate_height_of_beam_at_range(r1, box->other_angle, h0);
+
+        for (int ai = 0; ai < num_angles; ai++) {
+            double a1 = (box->min_angle + ai + 0.5) * box->angular_resolution;
+            int sample = sample_from_relative_location_in_raincell(r1, a1, box->other_angle, pos_radar, pos_raincell, raincell);
+
+            box->grid[ri * num_angles + ai] = (double)sample;
+            box->height_grid[ri * num_angles + ai] = sample_height;
+        }
+    }
+
+    free(pos_radar);
+    free(pos_raincell);
+}
+*/
+
+/*
+void fill_polar_box_grid(Polar_box* box,
+                         const Radar* radar,
+                         const Spatial_raincell* s_raincell,
+                         const Raincell* raincell,
+                         double time)
+{
+    if (!box) return;
+
+    size_t num_ranges = (size_t)box->num_ranges;
+    size_t num_angles = (size_t)box->num_angles;
+
+    // Reallocate grid if needed
+    if (!box->grid) {
+        box->grid = (double*)malloc(sizeof(double) * num_ranges * num_angles);
+        if (!box->grid) {
+            perror("Failed to allocate memory for polar box grid");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // Reallocate height_grid if needed
+    if (!box->height_grid) {
+        box->height_grid = (double*)malloc(sizeof(double) * num_ranges * num_angles);
+        if (!box->height_grid) {
+            perror("Failed to allocate memory for polar box height_grid");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    Point* pos_radar = get_position_radar(radar);
+    Point* pos_raincell = get_position_raincell(time, s_raincell);
+    double h0 = get_height_of_radar(radar);
+    double r1, a1, sample;
+    double sample_height;
+
+    for (size_t ri = 0; ri < num_ranges; ri++) {
+        r1 = (box->min_range_gate + (double)ri + 0.5) * box->range_resolution;
+        sample_height = calculate_height_of_beam_at_range(r1, box->other_angle, h0);
+
+        for (size_t ai = 0; ai < num_angles; ai++) {
+            a1 = (box->min_angle + (double)(ai + 0.5)) * box->angular_resolution;
+            sample = (double)sample_from_relative_location_in_raincell(r1, a1, box->other_angle, pos_radar, pos_raincell, raincell);
+
+            // Safe write to flattened grid
+            size_t idx = ri * num_angles + ai;
+            if (idx < num_ranges * num_angles) {
+                box->grid[idx] = sample;
+                box->height_grid[idx] = sample_height;
+            }
+        }
+    }
+
+    free(pos_radar);
+    free(pos_raincell);
+}
+*/
 
 /* // ADDRESSING MEMORY LEAK TRY 1
 void fill_polar_box_grid(struct Polar_box* box,
@@ -847,6 +1156,8 @@ printf("num_ranges=%d num_angles=%d allocated_size=%zu\n",
 
 */
 
+
+
 /*
 void fill_polar_box_grid(struct Polar_box* box,
                          const struct Radar* radar,
@@ -903,6 +1214,9 @@ if (box->height_grid == NULL) {
     }
 }
 */
+
+
+
 /*
 void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int scan_index, const char* filename) {
     FILE* fp = fopen(filename, "a");  // Append mode to handle multiple scans
@@ -984,8 +1298,8 @@ void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int s
     fprintf(fp, "box.max_range_gate=%.3f\n", box->max_range_gate);
     fprintf(fp, "box.min_angle=%.6f\n", box->min_angle);
     fprintf(fp, "box.max_angle=%.6f\n", box->max_angle);
-    fprintf(fp, "box.num_ranges=%.0f\n", box->num_ranges);
-    fprintf(fp, "box.num_angles=%.0f\n", box->num_angles);
+    fprintf(fp, "box.num_ranges=%d\n", box->num_ranges);
+    fprintf(fp, "box.num_angles=%d\n", box->num_angles);
     fprintf(fp, "box.range_resolution=%.3f\n", box->range_resolution);
     fprintf(fp, "box.angular_resolution=%.6f\n", box->angular_resolution);
     fprintf(fp, "box.other_angle=%.6f\n", box->other_angle); 

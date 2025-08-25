@@ -30,7 +30,7 @@ int main() {
    // Example: generate 3 command files automatically
     for (int i = 0; i < max_vol_scans; i++) {
         generate_commands_file(i, sim_time);
-	sim_time = sim_time + (i+1)*5.0*60.0;
+	sim_time += 5.0*60.0/max_vol_scans;
     }
 
 

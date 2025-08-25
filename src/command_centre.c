@@ -115,7 +115,7 @@ void printCommand(const Command* cmd) {
     printf("Other Angle: %.2f\n", cmd->other_angle);
     printf("============ \n\n");
 }
-
+/*
 void execute_command(const Command *cmd,Polar_box *box, const char *filename) {
     if (!cmd) {
         log_message("Fatal Error: NULL command pointer passed to execute_command().\n");
@@ -174,8 +174,36 @@ save_polar_box_grid_to_file(box, found_radar, cmd->local_scan_id, cmd->time,file
 }
 printf("===================\n\n");
 }
+*/
 
+void execute_command(const Command *cmd, Polar_box *box, const char *filename) {
+    if (!cmd || !box) {
+        log_message("Fatal: NULL pointer in execute_command\n");
+        return;
+    }
+
+    log_message("Executing command ID %d...\n", cmd->command_id);
+
+    const Radar* radar = find_radar_by_id_ONLY(cmd->radar_id);
+    if (!radar) { log_message("Radar %d not found\n", cmd->radar_id); return; }
+
+    const Raincell* rc = find_raincell_by_id_ONLY(cmd->raincell_id);
+    if (!rc) { log_message("Raincell %d not found\n", cmd->raincell_id); return; }
+
+    const Spatial_raincell* s_rc = find_spatial_raincell_by_id_ONLY(cmd->raincell_id);
+    if (!s_rc) { log_message("Spatial Raincell %d not found\n", cmd->raincell_id); return; }
+
+    // Fill and compute polar box
+    if (fill_polar_box(box, cmd->time, s_rc, radar, rc) != 0) {
+        log_message("Failed to fill polar box for command ID %d\n", cmd->command_id);
+        return;
+    }
+
+    fill_polar_box_grid(box, radar, s_rc, rc, cmd->time);
+    save_polar_box_grid_to_file(box, radar, cmd->local_scan_id, cmd->time, filename);
+}
 // ---------------------- Read Commands Once ----------------------
+/*
 bool read_command_file_once(const char *filename) {
     FILE *file = fopen(filename, "r");
     if (!file) {
@@ -213,6 +241,58 @@ bool read_command_file_once(const char *filename) {
 free_polar_box(box);
     fclose(file);
     log_message("Finished processing file: %s\n ___________________ \n wrote to outputs/radar_scan_%.4d.txt\n", filename, cmd.command_id);
+    return true;
+}
+*/
+
+bool read_command_file_once(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        log_message("Error opening file '%s': %s\n", filename, strerror(errno));
+        return false;
+    }
+
+    // Allocate one Polar_box and reuse it
+    Polar_box* box = init_polar_box();
+    if (!box) {
+        fclose(file);
+        log_message("Failed to initialize polar box\n");
+        return false;
+    }
+
+    Command cmd;
+    while (fscanf(file, "%lf %d %3s %d %lf",
+                  &cmd.time,
+                  &cmd.radar_id,
+                  cmd.scan_mode,
+                  &cmd.raincell_id,
+                  &cmd.other_angle) == 5) {
+
+        cmd.local_scan_id = global_command_id % SCANS_PER_FILE;
+        cmd.command_id = (int)floor(global_command_id / SCANS_PER_FILE);
+        global_command_id++;
+
+        log_message("Processing command ID %d: scan = %d, time=%.2f, radar_id=%d, scan_mode=%s, raincell_id=%d, angle=%.2f\n",
+                    cmd.command_id, cmd.local_scan_id, cmd.time, cmd.radar_id, cmd.scan_mode, cmd.raincell_id, cmd.other_angle);
+
+        if (!validate_command(&cmd)) {
+            log_message("Command ID %d failed validation. Skipping.\n", cmd.command_id);
+            continue;
+        }
+
+        // Safe output file name
+        char filenameA[256];
+        snprintf(filenameA, sizeof(filenameA), "outputs/radar_scan_%.4d.txt", cmd.command_id);
+
+        // Execute the command safely
+        execute_command(&cmd, box, filenameA);
+    }
+
+    // Free polar box once after all commands are done
+    free_polar_box(box);
+    fclose(file);
+
+    log_message("Finished processing file: %s\n", filename);
     return true;
 }
 
