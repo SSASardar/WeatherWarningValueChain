@@ -60,7 +60,7 @@ void generate_commands_file(int file_index, double start_time) {
         return;
     }
 
-    double interval = FIVE_MINUTES / 17.0;  // 1/17th of 5 minutes
+    double interval = FIVE_MINUTES / (SCANS_PER_FILE+1);  // 1/17th of 5 minutes
     int counter_A = 0;
     for (int i = 0; i < SCANS_PER_FILE; i++) {
         Command cmd;
@@ -199,8 +199,8 @@ void execute_command(const Command *cmd, Polar_box *box, const char *filename) {
         return;
     }
 
-    fill_polar_box_grid(box, radar, s_rc, rc, cmd->time);
-    save_polar_box_grid_to_file(box, radar, cmd->local_scan_id, cmd->time, filename);
+    fill_polar_box_grid(box, radar, s_rc, rc, cmd->time*60.0);
+    save_polar_box_grid_to_file(box, radar, cmd->local_scan_id, cmd->time*60.0, filename);
 }
 // ---------------------- Read Commands Once ----------------------
 /*

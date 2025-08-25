@@ -38,7 +38,7 @@ int main() {
     // Create raincell and spatial_raincell
     Raincell* raincell = create_raincell(1, 0.5, 10000.0, -0.5, 1000.0, 8000.0, 60.0*60.0, 180.0*60.0, 210.0*60.0, 270.0*60.0);   
    raincell_list[raincell_count] = raincell; 
-    Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
+    Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 60);
 	
    s_raincell_list[raincell_count++] = s_raincell; 
 
