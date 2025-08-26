@@ -25,12 +25,12 @@
 int main() {
 
     clock_t start = clock();
-   double sim_time = 0.0; 
-   int max_vol_scans = (int)240/5;
+   double sim_time = 00.0; 
+   int max_vol_scans = (int)((240.0-sim_time)/5);
    // Example: generate 3 command files automatically
     for (int i = 0; i < max_vol_scans; i++) {
         generate_commands_file(i, sim_time);
-	sim_time += 5.0*60.0/max_vol_scans;
+	sim_time += 5.0;
     }
 
 
@@ -38,7 +38,7 @@ int main() {
     // Create raincell and spatial_raincell
     Raincell* raincell = create_raincell(1, 0.5, 10000.0, -0.5, 1000.0, 8000.0, 60.0*60.0, 180.0*60.0, 210.0*60.0, 270.0*60.0);   
    raincell_list[raincell_count] = raincell; 
-    Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 60);
+    Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
 	
    s_raincell_list[raincell_count++] = s_raincell; 
 

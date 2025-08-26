@@ -606,7 +606,7 @@ int fill_polar_box(Polar_box* polar_box, double time,
 
     double kea_and_radar = KEA + radar->z;
 
-    Point* centre = get_position_raincell(time, s_raincell);
+    Point* centre = get_position_raincell(time, s_raincell);//time in seconds.
     Point* radar_point = get_position_radar(radar);
 
     double diff_x = centre->x - radar_point->x;
@@ -651,6 +651,9 @@ int fill_polar_box(Polar_box* polar_box, double time,
             return -1;
         }
     }
+
+	
+
 
     polar_box->num_ranges = num_ranges;
     polar_box->num_angles = num_angles;
@@ -1268,7 +1271,6 @@ void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int s
 }
 
 */
-
 
 
 void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int scan_index, double scan_time,const char* filename) {

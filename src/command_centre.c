@@ -48,7 +48,8 @@ static void log_message(const char *format, ...) {
 
 // ---------------------- Command Generation ----------------------
 #define SCANS_PER_FILE 16
-#define FIVE_MINUTES 300.0  // seconds
+// #define FIVE_MINUTES 300.0  // seconds
+#define FIVE_MINUTES 5.0  // minutes
 
 void generate_commands_file(int file_index, double start_time) {
     char filename[256];
@@ -60,7 +61,7 @@ void generate_commands_file(int file_index, double start_time) {
         return;
     }
 
-    double interval = FIVE_MINUTES / (SCANS_PER_FILE+1);  // 1/17th of 5 minutes
+    double interval = FIVE_MINUTES / (SCANS_PER_FILE);  // 1/16th of 5 minutes
     int counter_A = 0;
     for (int i = 0; i < SCANS_PER_FILE; i++) {
         Command cmd;
@@ -69,7 +70,7 @@ void generate_commands_file(int file_index, double start_time) {
         snprintf(cmd.scan_mode, sizeof(cmd.scan_mode), "PPI");
         cmd.raincell_id = 1;
         counter_A++;
-	cmd.other_angle = counter_A * (M_PI_2 / SCANS_PER_FILE); // Exampe: 0–90
+	cmd.other_angle = counter_A * (M_PI_4 / (SCANS_PER_FILE+1)); // Exampe: 0–90
 								 //
 	if (counter_A == 8) counter_A =0;
         fprintf(file, "%.2f %d %s %d %.5f\n",
@@ -193,14 +194,24 @@ void execute_command(const Command *cmd, Polar_box *box, const char *filename) {
     const Spatial_raincell* s_rc = find_spatial_raincell_by_id_ONLY(cmd->raincell_id);
     if (!s_rc) { log_message("Spatial Raincell %d not found\n", cmd->raincell_id); return; }
 
+double time_in_min = cmd->time;
+double time_in_sec = cmd->time * 60.0;
     // Fill and compute polar box
-    if (fill_polar_box(box, cmd->time, s_rc, radar, rc) != 0) {
+    if (fill_polar_box(box, time_in_sec, s_rc, radar, rc) != 0) {
         log_message("Failed to fill polar box for command ID %d\n", cmd->command_id);
         return;
     }
+    Point* pos_raincell = get_position_raincell(time_in_sec, s_rc);
+log_message("Radar=(%.1f, %.1f), Raincell=(%.1f, %.1f), time=%.1f, angle=%.3f rad\n",
+            radar->x, radar->y,
+            pos_raincell->x, pos_raincell->y,
+            time_in_sec,
+            box->other_angle);
+free(pos_raincell);
 
-    fill_polar_box_grid(box, radar, s_rc, rc, cmd->time*60.0);
-    save_polar_box_grid_to_file(box, radar, cmd->local_scan_id, cmd->time*60.0, filename);
+
+    fill_polar_box_grid(box, radar, s_rc, rc, time_in_sec);
+    save_polar_box_grid_to_file(box, radar, cmd->local_scan_id, time_in_min, filename);
 }
 // ---------------------- Read Commands Once ----------------------
 /*
