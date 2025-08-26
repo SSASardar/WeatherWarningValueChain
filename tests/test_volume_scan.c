@@ -95,8 +95,9 @@ compute_average_VPR(VPR_A_d,   params, t3, t2, 60.0, VPR_dummy);
         Radar* radar     = radar_scans[i].radar;
 	double time 	 = radar_scans[i].time;
        //update the convective profile. 
-       
-	update_VPR(VPR_strat, params, time, VPR_conv);
+      
+       double time_in_secs_1 = time*60.0;	
+	update_VPR(VPR_strat, params, time_in_secs_1, VPR_conv);
 
 
 
@@ -198,19 +199,14 @@ for (int ppi_idx = 0; ppi_idx < scan_count; ppi_idx++) {
 */
 
 
-//compute_display_grid_mean(vol,10.0);
-//write_display_grid_to_file(vol, "outputs/disp_grid_mean.txt");
-//compute_display_grid_min_above_threshold(vol,10.0);
-//write_display_grid_to_file(vol, "outputs/disp_grid_RALA.txt");
-
 compute_display_grid_max(vol,10.0);
 write_display_grid_to_file(vol, "outputs/disp_grid_max.txt");
 
 
 
 // calculate true raincell:
-double true_time = radar_scans[scan_count-1].time + ( radar_scans[scan_count-1].time -  radar_scans[scan_count-2].time  );
-   
+double true_time_min = radar_scans[scan_count-1].time + ( radar_scans[scan_count-1].time -  radar_scans[scan_count-2].time  );
+   double true_time = true_time_min * 60.0;
     Raincell* raincell = create_raincell(1, 0.5, 10000.0, -0.5, 1000.0, 8000.0, 60.0*60.0, 180.0*60.0, 210.0*60.0, 270.0*60.0);   
 Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
 	
@@ -240,7 +236,7 @@ write_true_grid_to_file(vol, "outputs/disp_grid_true.txt");
 
     double mse, mae, bias;
 
-    int ret = compute_rainfall_statistics(vol, &mse, &mae, &bias);
+    int ret = compute_rainfall_statistics(vol,10.0, &mse, &mae, &bias);
     if (ret == 0) {
         printf("MSE: %.5f\n", mse);
         printf("MAE: %.5f\n", mae);

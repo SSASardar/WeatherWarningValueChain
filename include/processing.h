@@ -26,9 +26,9 @@ typedef struct Cart_grid {
 
 typedef struct Vol_scan {
     int num_PPIs;
-    int num_elements;
-    int num_x;
-    int num_y;
+    size_t num_elements;
+    size_t num_x;
+    size_t num_y;
     Point ref_point;
     double resolution;
 
@@ -71,15 +71,17 @@ int write_vol_scan_ppi_to_file(const Vol_scan *vol, int ppi_index, const char *f
 
 
 int compute_display_grid_max(Vol_scan *vol, double threshold);
-int compute_display_grid_mean(Vol_scan *vol, double threshold);
-int compute_display_grid_min_above_threshold(Vol_scan *vol, double threshold); 
 
 int write_display_grid_to_file(const Vol_scan *vol, const char *filename); 
 int write_true_grid_to_file(const Vol_scan *vol, const char *filename); 
 
 int classify_point_in_raincell(const Point *pt, const Point *raincell_center, const Raincell *raincell); 
 int fill_refl_ALA_grid(Vol_scan *vol, const Point *raincell_center, const Raincell *raincell, const VPR *vpr_1, const VPR *vpr_2);
-int compute_rainfall_statistics(const Vol_scan *vol, double threshold, double *mse, double *mae, double *bias); 
-
+//int compute_rainfall_statistics(const Vol_scan *vol, double threshold, double *mse, double *mae, double *bias); 
+int compute_rainfall_statistics(const Vol_scan *vol, double threshold, double grid_res,
+                                double *mse, double *mae, double *bias,
+                                double *total_measured, double *total_true,
+                                double *total_measured_mm2, double *total_true_mm2);
+ 
 void free_cart_grid(Cart_grid *cg);
 #endif /* PROCESSING_H  */

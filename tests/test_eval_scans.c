@@ -11,13 +11,19 @@
 #include "processing.h"
 #include "vertical_profiles.h"
 
-#define NUM_SCANS 48  // 0..47
-
+#define NUM_SCANS 54  // 0..53
+    
 typedef struct {
     double mse;
     double mae;
     double bias;
+    double total_measured;        // sum of R over grid points
+    double total_true;            // sum of R over grid points
+    double total_measured_mm2;    // area-corrected total in mm*h per km²
+    double total_true_mm2;        // area-corrected total in mm*h per km²
 } RainfallStats;
+
+
 
 int main() {
     clock_t start = clock();
@@ -61,88 +67,7 @@ Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
 
     double cart_grid_res = 25;
 
-    /* -- start of try 2
-    // *-- start of try 1
-    // Allocate cart_grids array once (max scan_count will be reused)
-    Cart_grid **cart_grids = malloc(100 * sizeof(Cart_grid*));  // adjust 100 if needed
-
     for (int scan_idx = 0; scan_idx < NUM_SCANS; scan_idx++) {
-        char filename[256];
-        snprintf(filename, sizeof(filename), "outputs/radar_scan_%04d.txt", scan_idx);
-read_radar_scans(filename);  // just call it
-// optionally check if scan_count > 0 to ensure success
-if (scan_count == 0) {
-    fprintf(stderr, "No radar scans loaded from %s\n", filename);
-    continue;
-}
-
-        printf("Processing %s (scan %d/%d)...\n", filename, scan_idx+1, NUM_SCANS);
-
-        int cg_count = 0;
-
-        // Convert Polar_box → Cart_grid
-        for (int i = 0; i < scan_count; i++) {
-            Polar_box* p_box = radar_scans[i].box;
-            Radar* radar = radar_scans[i].radar;
-            double time = radar_scans[i].time;
-
-            update_VPR(VPR_strat, params, time, VPR_conv);
-            Bounding_box* bbox = bounding_box_from_textfile(p_box, radar);
-
-            int num_x = (int)fabs(ceil((bbox->bottomLeft.x)/cart_grid_res) 
-                                  - floor((bbox->bottomRight.x)/cart_grid_res));
-            int num_y = (int)fabs(ceil((bbox->bottomLeft.y)/cart_grid_res) 
-                                  - floor((bbox->topLeft.y)/cart_grid_res));
-
-            Point ref_point;
-            ref_point.x = ceil((bbox->bottomLeft.x)/cart_grid_res) * cart_grid_res;
-            ref_point.y = ceil((bbox->bottomLeft.y)/cart_grid_res) * cart_grid_res;
-
-            Cart_grid *cg = Cart_grid_init(cart_grid_res, num_x, num_y, ref_point);
-            if (!cg) continue;
-
-            // Fill Cart_grid
-            for (int xi = 0; xi < num_x; xi++) {
-                for (int yi = 0; yi < num_y; yi++) {
-                    int idA = xi * num_y + yi;
-                    Point p = {ref_point.x + xi*cart_grid_res, ref_point.y + yi*cart_grid_res};
-                    int range_idx, angle_idx;
-                    if (getPolarBoxIndex(p, radar->x, radar->y, p_box, &range_idx, &angle_idx)) {
-                        int p_grid_idx = range_idx * (int)(p_box->num_angles) + angle_idx;
-                        cg->height_grid[idA] = p_box->height_grid[p_grid_idx];
-
-                        if (p_box->grid[p_grid_idx] == 0)
-                            cg->grid[idA] = p_box->grid[p_grid_idx];
-                        else if (p_box->grid[p_grid_idx] == 1)
-                            cg->grid[idA] = get_reflectivity_at_height(VPR_strat, p_box->height_grid[p_grid_idx]);
-                        else
-                            cg->grid[idA] = get_reflectivity_at_height(VPR_conv, p_box->height_grid[p_grid_idx]);
-
-                        for (int k = 0; k < 3; k++)
-                            cg->attenuation_grid[3*idA+k] = p_box->attenuation_grid[3*p_grid_idx+k];
-                    } else {
-                        cg->grid[idA] = NAN;
-                        cg->height_grid[idA] = NAN;
-                        for (int k = 0; k < 3; k++) cg->attenuation_grid[3*idA+k] = NAN;
-                    }
-                }
-            }
-
-            cart_grids[cg_count++] = cg;
-        }
-
-        // Initialize Vol_scan
-        Vol_scan *vol = init_vol_scan(cart_grids, cg_count);
-        if (!vol) {
-            fprintf(stderr, "Failed to init volume scan\n");
-            continue;
-        }
-        for (int i = 0; i < cg_count; i++)
-            add_cart_grid_to_volscan(vol, cart_grids[i], i);
-
-// -- begining of try 1
-
-for (int scan_idx = 0; scan_idx < NUM_SCANS; scan_idx++) {
     char filename[256];
     snprintf(filename, sizeof(filename), "outputs/radar_scan_%04d.txt", scan_idx);
 
@@ -164,12 +89,11 @@ for (int scan_idx = 0; scan_idx < NUM_SCANS; scan_idx++) {
         Polar_box* p_box = radar_scans[i].box;
         Radar* radar = radar_scans[i].radar;
         double time = radar_scans[i].time;
-
-        update_VPR(VPR_strat, params, time, VPR_conv);
+	double time_s_2 = time*60;
+        update_VPR(VPR_strat, params, time_s_2, VPR_conv);
 
         Bounding_box* bbox = bounding_box_from_textfile(p_box, radar);
 
-        // compute safe num_x and num_y
         int num_x = (int)(ceil((bbox->bottomRight.x - bbox->bottomLeft.x)/cart_grid_res));
         int num_y = (int)(ceil((bbox->topLeft.y - bbox->bottomLeft.y)/cart_grid_res));
         if (num_x <= 0) num_x = 1;
@@ -183,7 +107,6 @@ for (int scan_idx = 0; scan_idx < NUM_SCANS; scan_idx++) {
         Cart_grid *cg = Cart_grid_init(cart_grid_res, num_x, num_y, ref_point);
         if (!cg) continue;
 
-        // Fill Cart_grid
         for (int xi = 0; xi < num_x; xi++) {
             for (int yi = 0; yi < num_y; yi++) {
                 int idA = xi * num_y + yi;
@@ -214,150 +137,12 @@ for (int scan_idx = 0; scan_idx < NUM_SCANS; scan_idx++) {
         cart_grids[cg_count++] = cg;
     }
 
-    // Init Vol_scan
     Vol_scan *vol = init_vol_scan(cart_grids, cg_count);
     for (int i = 0; i < cg_count; i++)
         add_cart_grid_to_volscan(vol, cart_grids[i], i);
-
-
 
 compute_display_grid_max(vol,10.0);
-
- double true_time_min = radar_scans[scan_count-1].time + ( radar_scans[scan_count-1].time -  radar_scans[scan_count-2].time  );
- 
- double true_time = true_time_min*60.0;
- 
- update_VPR(VPR_strat, params, true_time, VPR_conv);
- // initialize your cell, e.g. my_cell.initial_x, my_cell.dx, etc.
-
-Point* raincell_pos = get_position_raincell(true_time, s_raincell);
-if (!raincell_pos) {
-    fprintf(stderr, "Failed to get raincell position\n");
-    exit(EXIT_FAILURE);
-}
-//printf("Raincell position: x=%f, y=%f\n", raincell_pos->x, raincell_pos->y);
-
-
-if (fill_refl_ALA_grid(vol, raincell_pos, raincell, VPR_strat, VPR_conv) != 0) {
-    fprintf(stderr, "Failed to fill Refl_ALA grid\n");
-}
-
-
-
-
-        // Compute rainfall statistics
-        double mse, mae, bias;
-        if (compute_rainfall_statistics(vol,10.0, &mse, &mae, &bias) == 0) {
-            stats_array[scan_idx].mse = mse;
-            stats_array[scan_idx].mae = mae;
-            stats_array[scan_idx].bias = bias;
-        } else {
-            stats_array[scan_idx].mse = stats_array[scan_idx].mae = stats_array[scan_idx].bias = NAN;
-        }
-
-        // Free Cart_grids for next scan
-        for (int i = 0; i < cg_count; i++)
-            free_cart_grid(cart_grids[i]);
-        free_vol_scan(vol);
-    }
-
-    // -------------------------------
-    // Output statistics to a CSV file
-    FILE *fp = fopen("outputs/stats.txt", "w");
-    if (fp) {
-        fprintf(fp, "Scan,MSE,MAE,Bias\n");
-        for (int i = 0; i < NUM_SCANS; i++) {
-            fprintf(fp, "%d %.5f %.5f %.5f\n", i, stats_array[i].mse, stats_array[i].mae, stats_array[i].bias);
-        }
-        fclose(fp);
-        printf("Statistics saved to outputs/stats.txt\n");
-    } else {
-        fprintf(stderr, "Failed to open outputs/stats.csv for writing\n");
-    }
-
-    free(params);
-//    free(cart_grids);
-
-
-    */ // ----- end of try 2. 
-
-
-    for (int scan_idx = 0; scan_idx < NUM_SCANS; scan_idx++) {
-    char filename[256];
-    snprintf(filename, sizeof(filename), "outputs/radar_scan_%04d.txt", scan_idx);
-
-    read_radar_scans(filename);
-    if (scan_count == 0) {
-        fprintf(stderr, "No radar scans loaded from %s\n", filename);
-        continue;
-    }
-
-    printf("Processing %s (scan %d/%d)...\n", filename, scan_idx+1, NUM_SCANS);
-
-    // Allocate cart_grids for this scan
-    Cart_grid **cart_grids = malloc(scan_count * sizeof(Cart_grid*));
-    if (!cart_grids) { fprintf(stderr, "Malloc failed\n"); exit(1); }
-
-    int cg_count = 0;
-
-    for (int i = 0; i < scan_count; i++) {
-        Polar_box* p_box = radar_scans[i].box;
-        Radar* radar = radar_scans[i].radar;
-        double time = radar_scans[i].time;
-
-        update_VPR(VPR_strat, params, time, VPR_conv);
-
-        Bounding_box* bbox = bounding_box_from_textfile(p_box, radar);
-
-        int num_x = (int)(ceil((bbox->bottomRight.x - bbox->bottomLeft.x)/cart_grid_res));
-        int num_y = (int)(ceil((bbox->topLeft.y - bbox->bottomLeft.y)/cart_grid_res));
-        if (num_x <= 0) num_x = 1;
-        if (num_y <= 0) num_y = 1;
-
-        Point ref_point = {
-            ceil(bbox->bottomLeft.x / cart_grid_res) * cart_grid_res,
-            ceil(bbox->bottomLeft.y / cart_grid_res) * cart_grid_res
-        };
-
-        Cart_grid *cg = Cart_grid_init(cart_grid_res, num_x, num_y, ref_point);
-        if (!cg) continue;
-
-        for (int xi = 0; xi < num_x; xi++) {
-            for (int yi = 0; yi < num_y; yi++) {
-                int idA = xi * num_y + yi;
-                Point p = {ref_point.x + xi*cart_grid_res, ref_point.y + yi*cart_grid_res};
-                int range_idx, angle_idx;
-
-                if (getPolarBoxIndex(p, radar->x, radar->y, p_box, &range_idx, &angle_idx)) {
-                    int p_grid_idx = range_idx * (int)p_box->num_angles + angle_idx;
-                    cg->height_grid[idA] = p_box->height_grid[p_grid_idx];
-
-                    if (p_box->grid[p_grid_idx] == 0)
-                        cg->grid[idA] = p_box->grid[p_grid_idx];
-                    else if (p_box->grid[p_grid_idx] == 1)
-                        cg->grid[idA] = get_reflectivity_at_height(VPR_strat, p_box->height_grid[p_grid_idx]);
-                    else
-                        cg->grid[idA] = get_reflectivity_at_height(VPR_conv, p_box->height_grid[p_grid_idx]);
-
-                    for (int k = 0; k < 3; k++)
-                        cg->attenuation_grid[3*idA+k] = p_box->attenuation_grid[3*p_grid_idx+k];
-                } else {
-                    cg->grid[idA] = NAN;
-                    cg->height_grid[idA] = NAN;
-                    for (int k = 0; k < 3; k++) cg->attenuation_grid[3*idA+k] = NAN;
-                }
-            }
-        }
-
-        cart_grids[cg_count++] = cg;
-    }
-
-    Vol_scan *vol = init_vol_scan(cart_grids, cg_count);
-    for (int i = 0; i < cg_count; i++)
-        add_cart_grid_to_volscan(vol, cart_grids[i], i);
-
-    compute_display_grid_max(vol,10.0);
-
+//compute_display_grid_min_above_threshold(vol,10.0);
     double true_time_min = radar_scans[scan_count-1].time +
                            (radar_scans[scan_count-1].time - radar_scans[scan_count-2].time);
     double true_time = true_time_min * 60.0;
@@ -374,29 +159,65 @@ if (fill_refl_ALA_grid(vol, raincell_pos, raincell, VPR_strat, VPR_conv) != 0) {
         fprintf(stderr, "Failed to fill Refl_ALA grid\n");
     }
 
-    // Compute rainfall statistics
+    //calculate statistics.
     double mse, mae, bias;
-    if (compute_rainfall_statistics(vol,10.0, &mse, &mae, &bias) == 0) {
-        stats_array[scan_idx].mse = mse;
-        stats_array[scan_idx].mae = mae;
-        stats_array[scan_idx].bias = bias;
-    } else {
-        stats_array[scan_idx].mse = stats_array[scan_idx].mae = stats_array[scan_idx].bias = NAN;
-    }
+double total_measured, total_true;
+double total_measured_mm2, total_true_mm2;
 
-    // Print stats for this scan
-    printf("Scan %d stats: MSE=%.5f MAE=%.5f Bias=%.5f\n",
-           scan_idx, stats_array[scan_idx].mse, stats_array[scan_idx].mae, stats_array[scan_idx].bias);
+if (compute_rainfall_statistics(vol, 10.0, cart_grid_res,
+                                &mse, &mae, &bias,
+                                &total_measured, &total_true,
+                                &total_measured_mm2, &total_true_mm2) == 0) {
+    stats_array[scan_idx].mse = mse;
+    stats_array[scan_idx].mae = mae;
+    stats_array[scan_idx].bias = bias;
+    stats_array[scan_idx].total_measured = total_measured;
+    stats_array[scan_idx].total_true = total_true;
+    stats_array[scan_idx].total_measured_mm2 = total_measured_mm2;
+    stats_array[scan_idx].total_true_mm2 = total_true_mm2;
+} else {
+    stats_array[scan_idx].mse = stats_array[scan_idx].mae = stats_array[scan_idx].bias = NAN;
+    stats_array[scan_idx].total_measured = stats_array[scan_idx].total_true = NAN;
+    stats_array[scan_idx].total_measured_mm2 = stats_array[scan_idx].total_true_mm2 = NAN;
+}
 
-    // Append stats to TXT file (space-separated)
-    FILE *fp = fopen("outputs/stats.txt", "a");
-    if (fp) {
-        if(scan_idx == 0) fprintf(fp, "Scan MSE MAE Bias\n");  // header only once
-        fprintf(fp, "%d %.5f %.5f %.5f\n", scan_idx, stats_array[scan_idx].mse, stats_array[scan_idx].mae, stats_array[scan_idx].bias);
-        fclose(fp);
-    } else {
+
+// Print stats for this scan
+printf("Scan %d stats: MSE=%.5f MAE=%.5f Bias=%.5f Total_meas=%.5f Total_true=%.5f Total_meas_mm2=%.5f Total_true_mm2=%.5f\n",
+       scan_idx, stats_array[scan_idx].mse, stats_array[scan_idx].mae, stats_array[scan_idx].bias,
+       stats_array[scan_idx].total_measured, stats_array[scan_idx].total_true,
+       stats_array[scan_idx].total_measured_mm2, stats_array[scan_idx].total_true_mm2);
+
+FILE *fp = fopen("outputs/stats.txt", "a");
+if (fp) {
+    if(scan_idx == 0) 
+        fprintf(fp, "Scan MSE MAE Bias Total_meas Total_true Total_meas_mm2 Total_true_mm2\n");
+    fprintf(fp, "%d %.5f %.5f %.5f %.5f %.5f %.5f %.5f\n",
+            scan_idx, stats_array[scan_idx].mse, stats_array[scan_idx].mae, stats_array[scan_idx].bias,
+            stats_array[scan_idx].total_measured, stats_array[scan_idx].total_true,
+            stats_array[scan_idx].total_measured_mm2, stats_array[scan_idx].total_true_mm2);
+    fclose(fp);
+} else {
         fprintf(stderr, "Failed to open outputs/stats.txt for writing\n");
     }
+
+
+
+// --- Write display_grid to file ---
+char disp_filename[256];
+snprintf(disp_filename, sizeof(disp_filename), "outputs/disp_g_%04d.txt", scan_idx);
+if (write_display_grid_to_file(vol, disp_filename) != 0) {
+    fprintf(stderr, "Failed to write display grid to %s\n", disp_filename);
+}
+
+// --- Write true_grid to file ---
+char true_filename[256];
+snprintf(true_filename, sizeof(true_filename), "outputs/true_g_%04d.txt", scan_idx);
+if (write_true_grid_to_file(vol, true_filename) != 0) {
+    fprintf(stderr, "Failed to write true grid to %s\n", true_filename);
+}
+
+
 
     // Free memory
     for (int i = 0; i < cg_count; i++)

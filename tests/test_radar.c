@@ -27,8 +27,9 @@ const Radar* radars[] = { radar1, radar2 };
     
     for (int ti = 0; ti<16;ti++){
     	  // time = (265.0+(double)ti*(0.3125))*60.0;
-    	   time = (200.0+(double)ti*(0.3125))*60.0;
-      	Bounding_box* true_box = create_BoundingBox_for_s_raincell(s_raincell, time, raincell);
+    	   time = (200.0+(double)ti*(0.3125));
+      	double time_in_sec = time*60.0;
+	   Bounding_box* true_box = create_BoundingBox_for_s_raincell(s_raincell, time_in_sec, raincell);
 
 
 	// update the elevation angle: 
@@ -41,7 +42,7 @@ const Radar* radars[] = { radar1, radar2 };
 
 
 	// Fill polar box
-	    if (fill_polar_box(box, time, s_raincell, radar_test, raincell) != 0) {
+	    if (fill_polar_box(box, time_in_sec, s_raincell, radar_test, raincell) != 0) {
         printf("Failed to update polar box for iteration %d\n", ti);
         // handle error if needed
     }
@@ -61,7 +62,7 @@ print_bounding_box(bounded_polar_box);
     }
 
 
-fill_polar_box_grid(box, radar_test, s_raincell, raincell, time);
+fill_polar_box_grid(box, radar_test, s_raincell, raincell, time_in_sec);
 
 save_polar_box_grid_to_file(box, radar_test, ti, time, "outputs/radar_scans.txt");
 }

@@ -57,7 +57,7 @@ Radar* radar_list[MAX_RADARS];
 int radar_count = 0;
 
 // Scan collection
-RadarScan radar_scans[MAX_SCANS];
+RadarScan radar_scans[MAX_SCANS];//ONLY STORE ONE SCAN!! PLEASE! 
 int scan_count = 0;
 
 
@@ -424,7 +424,7 @@ Polar_box* init_polar_box() {
     polar_box->num_ranges = 0;
     polar_box->num_angles = 0;
     polar_box->radar_id = -1; // or any invalid default
-polar_box->other_angle = 0*DEG2RAD;
+polar_box->other_angle = 0;
     return polar_box;
 }
 
@@ -1341,7 +1341,8 @@ void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int s
 //creating a radar, a polar box, and a radarscan type from the radar_scans file. 
 
 void read_radar_scans(const char* filename) {
-    FILE* file = fopen(filename, "r");
+    scan_count = 0;
+	FILE* file = fopen(filename, "r");
     if (!file) {
         perror("Failed to open file");
         return;

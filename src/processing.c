@@ -16,7 +16,7 @@
 #include <ctype.h>
 #include <float.h>
 
-
+#define MAX_ALLOWED_CELLS ((size_t)1e9)  // ~1 billion doubles = ~8 GB
 
 Cart_grid* Cart_grid_init(double resolution, int num_x, int num_y, Point ref_point) {
     Cart_grid *cg = (Cart_grid *)malloc(sizeof(Cart_grid));
@@ -222,7 +222,7 @@ void generate_attenuation_grid(Cartesian_grid* cg) {
 
 
 
-Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs) {
+/*Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs) {
     if (!cart_grids || num_PPIs <= 0) return NULL;
 
     Vol_scan *vol = (Vol_scan *)malloc(sizeof(Vol_scan));
@@ -249,9 +249,32 @@ Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs) {
     vol->ref_point.y = min_y;
 
     double res = cart_grids[0]->resolution;
-    vol->num_x = (int)ceil((max_x - min_x) / res) + 1;
-    vol->num_y = (int)ceil((max_y - min_y) / res) + 1;
-    vol->num_elements = vol->num_x * vol->num_y;
+//     vol->num_x = (int)ceil((max_x - min_x) / res) + 1;
+//    vol->num_y = (int)ceil((max_y - min_y) / res) + 1;
+//    vol->num_elements = vol->num_x * vol->num_y;
+//	
+
+size_t nx = (size_t)ceil((max_x - min_x) / res) + 1;
+size_t ny = (size_t)ceil((max_y - min_y) / res) + 1;
+size_t num_elements = nx * ny;
+
+if (num_elements > MAX_ALLOWED_CELLS) {
+    fprintf(stderr, "Error: grid too large (%zu cells)\n", num_elements);
+    free(vol);
+    return NULL;
+}
+
+size_t total_cells = num_elements * (size_t)num_PPIs;
+
+if (total_cells > MAX_ALLOWED_CELLS) {
+    fprintf(stderr, "Error: volume too large (%zu cells)\n", total_cells);
+    free(vol);
+    return NULL;
+}
+vol->num_x = nx; 
+vol->num_y = ny; 
+vol->num_elements = vol->num_x * vol->num_y;
+
 
     vol->resolution  = res;
 
@@ -280,6 +303,98 @@ Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs) {
 
     return vol;
 }
+*/
+
+Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs) {
+    if (!cart_grids || num_PPIs <= 0) return NULL;
+
+    Vol_scan *vol = (Vol_scan *)malloc(sizeof(Vol_scan));
+    if (!vol) return NULL;
+
+    vol->num_PPIs = num_PPIs;
+
+    double min_x = DBL_MAX, min_y = DBL_MAX;
+    double max_x = -DBL_MAX, max_y = -DBL_MAX;
+
+    for (int i = 0; i < num_PPIs; i++) {
+        Cart_grid *g = cart_grids[i];
+        if (!g) continue;
+
+        if (g->ref_point.x < min_x) min_x = g->ref_point.x;
+        if (g->ref_point.y < min_y) min_y = g->ref_point.y;
+
+        double g_max_x = g->ref_point.x + g->resolution * (g->num_x - 1);
+        double g_max_y = g->ref_point.y + g->resolution * (g->num_y - 1);
+
+        if (g_max_x > max_x) max_x = g_max_x;
+        if (g_max_y > max_y) max_y = g_max_y;
+    }
+
+    vol->ref_point.x = min_x;
+    vol->ref_point.y = min_y;
+
+    double res = cart_grids[0]->resolution;
+    size_t nx = (size_t)ceil((max_x - min_x) / res) + 1;
+    size_t ny = (size_t)ceil((max_y - min_y) / res) + 1;
+    size_t num_elements = nx * ny;
+
+    // 🔎 Debug logging of grid calculation
+    fprintf(stderr,
+        "[DEBUG] init_vol_scan:\n"
+        "  min_x=%.2f, max_x=%.2f, min_y=%.2f, max_y=%.2f\n"
+        "  resolution=%.4f → nx=%zu, ny=%zu → total=%zu cells\n"
+        "  num_PPIs=%d → total_cells=%zu\n",
+        min_x, max_x, min_y, max_y,
+        res, nx, ny, num_elements,
+        num_PPIs, num_elements * (size_t)num_PPIs);
+
+    // Sanity check
+    if (num_elements > MAX_ALLOWED_CELLS || num_elements * (size_t)num_PPIs > MAX_ALLOWED_CELLS) {
+        fprintf(stderr,
+            "Error: volume too large (%zu cells across %d PPIs)\n",
+            num_elements, num_PPIs);
+        free(vol);
+        return NULL;
+    }
+
+    vol->num_x = nx;
+    vol->num_y = ny;
+    vol->num_elements = num_elements;
+    vol->resolution = res;
+
+    size_t total_cells = num_elements * (size_t)num_PPIs;
+
+    vol->grid_refl    = calloc(total_cells, sizeof(double));
+    vol->grid_height  = calloc(total_cells, sizeof(double));
+    vol->grid_att     = calloc(total_cells, sizeof(double));
+    vol->display_grid = calloc(num_elements, sizeof(double));
+    vol->refl_ALA     = calloc(num_elements, sizeof(double));
+
+    if (!vol->grid_refl || !vol->grid_height || !vol->grid_att ||
+        !vol->display_grid || !vol->refl_ALA) {
+        free(vol->grid_refl); free(vol->grid_height); free(vol->grid_att);
+        free(vol->display_grid); free(vol->refl_ALA); free(vol);
+        return NULL;
+    }
+
+    for (size_t i = 0; i < total_cells; i++) {
+        vol->grid_refl[i]   = NAN;
+        vol->grid_height[i] = NAN;
+        vol->grid_att[i]    = NAN;
+    }
+
+    for (size_t i = 0; i < num_elements; i++) {
+        vol->display_grid[i] = NAN;
+        vol->refl_ALA[i]     = NAN;
+    }
+
+    return vol;
+}
+
+
+
+
+
 
 int add_cart_grid_to_volscan(Vol_scan *vol, Cart_grid *grid, int ppi_index) {
     if (!vol || !grid) return -1;
@@ -405,60 +520,6 @@ vol->display_grid[base_idx] = (!found || max_val < threshold) ? NAN : max_val;
     return 0;
 }
 
-
-
-int compute_display_grid_mean(Vol_scan *vol, double threshold) {
-    if (!vol) return -1;
-
-    for (int x = 0; x < vol->num_x; x++) {
-        for (int y = 0; y < vol->num_y; y++) {
-            int base_idx = x * vol->num_y + y;  // index into display_grid
-            double sum_val = 0.0;
-            int count = 0;
-
-            for (int ppi = 0; ppi < vol->num_PPIs; ppi++) {
-                int idx = vol_index(vol, x, y, ppi);
-                double refl = vol->grid_refl[idx];
-                if (!isnan(refl)) {
-                    sum_val += refl;
-                    count++;
-                }
-            }
-double avg = (count > 0) ? (sum_val / count) : NAN;
-vol->display_grid[base_idx] = (count == 0 || avg < threshold) ? NAN : avg;
-        }
-    }
-
-    return 0;
-}
-
-int compute_display_grid_min_above_threshold(Vol_scan *vol, double threshold) {
-    if (!vol) return -1;
-
-    for (int x = 0; x < vol->num_x; x++) {
-        for (int y = 0; y < vol->num_y; y++) {
-            int base_idx = x * vol->num_y + y;  // index into display_grid
-            double min_val = INFINITY;
-            int found = 0;
-
-            for (int ppi = 0; ppi < vol->num_PPIs; ppi++) {
-                int idx = vol_index(vol, x, y, ppi);
-                double refl = vol->grid_refl[idx];
-
-                if (!isnan(refl) && refl > threshold) {
-                    if (!found || refl < min_val) {
-                        min_val = refl;
-                        found = 1;
-                    }
-                }
-            }
-
-            vol->display_grid[base_idx] = found ? min_val : NAN;
-        }
-    }
-
-    return 0;
-}
 
 int write_display_grid_to_file(const Vol_scan *vol, const char *filename) {
     if (!vol || !filename) return -1;
@@ -607,8 +668,8 @@ int fill_refl_ALA_grid(Vol_scan *vol,
     }
 
     // DEBUG sanity check: print raincell position
-    fprintf(stderr, "Raincell center at x=%.2f, y=%.2f\n",
-            raincell_center->x, raincell_center->y);
+    //fprintf(stderr, "Raincell center at x=%.2f, y=%.2f\n",
+    //        raincell_center->x, raincell_center->y);
 
     // Fill grid
     for (int x = 0; x < vol->num_x; x++) {
@@ -694,7 +755,7 @@ void free_cart_grid(Cart_grid *cg) {
 }
 
 
-
+/*
 int compute_rainfall_statistics(const Vol_scan *vol, double threshold, double *mse, double *mae, double *bias) {
     if (!vol || !vol->display_grid || !vol->refl_ALA || !mse || !mae || !bias) return -1;
 
@@ -735,4 +796,59 @@ int compute_rainfall_statistics(const Vol_scan *vol, double threshold, double *m
     *bias = sum_error / count;
 
     return 0;
+}*/
+
+
+int compute_rainfall_statistics(const Vol_scan *vol, double threshold, double grid_res,
+                                double *mse, double *mae, double *bias,
+                                double *total_measured, double *total_true,
+                                double *total_measured_mm2, double *total_true_mm2) {
+    if (!vol || !vol->display_grid || !vol->refl_ALA || !mse || !mae || !bias
+        || !total_measured || !total_true || !total_measured_mm2 || !total_true_mm2) return -1;
+
+    double sum_sq_error = 0.0;
+    double sum_abs_error = 0.0;
+    double sum_error = 0.0;
+    double sum_measured = 0.0;
+    double sum_true = 0.0;
+    int count = 0;
+
+    for (int i = 0; i < vol->num_elements; i++) {
+        double dBZ_disp = vol->display_grid[i];
+        double dBZ_true = vol->refl_ALA[i];
+
+        if (isnan(dBZ_disp) || isnan(dBZ_true)) continue;
+        if (dBZ_disp < threshold) continue;
+
+        double Z_disp = pow(10.0, dBZ_disp / 10.0);
+        double Z_true = pow(10.0, dBZ_true / 10.0);
+
+        double R_disp = pow(Z_disp / 200.0, 1.0 / 1.6);
+        double R_true = pow(Z_true / 200.0, 1.0 / 1.6);
+
+        sum_measured += R_disp;
+        sum_true += R_true;
+
+        double error = R_disp - R_true;
+        sum_error += error;
+        sum_sq_error += error * error;
+        sum_abs_error += fabs(error);
+        count++;
+    }
+
+    if (count == 0) return -2;
+
+    *mse = sum_sq_error / count;
+    *mae = sum_abs_error / count;
+    *bias = sum_error / count;
+    *total_measured = sum_measured;
+    *total_true = sum_true;
+
+    // Convert to area-corrected total rainfall
+    double area_km2 = (grid_res / 1000.0) * (grid_res / 1000.0); // km² per grid cell
+    *total_measured_mm2 = sum_measured * area_km2;
+    *total_true_mm2 = sum_true * area_km2;
+
+    return 0;
 }
+
