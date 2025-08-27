@@ -54,7 +54,7 @@ def plot_and_save_grid(grid, title, output_folder="plots"):
     plt.figure(figsize=(10, 10))
     extent = [0 - start_col, padded_cols - start_col,
               0 - start_row, padded_rows - start_row]
-    plt.imshow(padded_grid, cmap='viridis', origin='lower', extent=extent)
+    plt.imshow(padded_grid.T, cmap='viridis', origin='lower', extent=extent)
     plt.colorbar(label='Value')
     plt.title(title)
     plt.xlabel('X index')

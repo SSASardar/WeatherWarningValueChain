@@ -87,7 +87,7 @@ bool isPointInSectorAnnulus(Point p, Point center, double minAngle, double maxAn
 
     return isAngleBetween(angle, minAngle, maxAngle);
 }
-
+/*
 bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box, int *range_idx, int *angle_idx) {
     double dx = p.x - c_x;
     double dy = p.y - c_y;
@@ -103,17 +103,66 @@ bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box, int
         return false;
 
     // Range index
-    *range_idx = (int)((r - box->min_range_gate * box->range_resolution) / box->range_resolution);
+    *range_idx = (int)lround((r - box->min_range_gate * box->range_resolution) / box->range_resolution);
 
     // Corrected: use radians for angle_diff
     double angle_diff = normalizeAngle(angle - box->min_angle * DEG2RAD);
-    *angle_idx = (int)(angle_diff / (box->angular_resolution * DEG2RAD));
+    *angle_idx = (int)lround(angle_diff / (box->angular_resolution * DEG2RAD));
 
     if (*range_idx >= (int)box->num_ranges || *angle_idx >= (int)box->num_angles)
         return false;
 
     return true;
 }
+*/
+
+bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box,
+                      int *range_idx, int *angle_idx) {
+    double dx = p.x - c_x;
+    double dy = p.y - c_y;
+
+    double r = sqrt(dx * dx + dy * dy);
+
+    // --- Range check ---
+    if (r <= box->min_range_gate * box->range_resolution ||
+        r > box->max_range_gate * box->range_resolution)
+        return false;
+
+    // --- Angle in [0, 2π) ---
+    double angle = atan2(dy, dx);
+    if (angle < 0) angle += 2 * M_PI;
+
+    double min_angle = box->min_angle * DEG2RAD;
+    if (min_angle < 0) min_angle += 2 * M_PI;
+
+    // Angular span covered by this polar box
+    double span = box->num_angles * box->angular_resolution * DEG2RAD;
+
+    // Difference relative to box min angle, wrapped
+    double angle_diff = angle - min_angle;
+    if (angle_diff < 0) angle_diff += 2 * M_PI;
+
+    // If angle is outside the actual span of the box, reject
+    if (angle_diff > span)
+        return false;
+
+    // --- Range index (rounded) ---
+    *range_idx = (int)floor((r - box->min_range_gate * box->range_resolution) /
+                             box->range_resolution);
+    if (*range_idx < 0) *range_idx = 0;
+    if (*range_idx >= (int)box->num_ranges) *range_idx = box->num_ranges - 1;
+
+    // --- Angle index (rounded) ---
+    *angle_idx = (int)floor(angle_diff / (box->angular_resolution * DEG2RAD));
+    if (*angle_idx < 0) *angle_idx = 0;
+    if (*angle_idx >= (int)box->num_angles) *angle_idx = box->num_angles - 1;
+
+    return true;
+}
+
+
+
+
 
 void writeCartGridToFile(Cart_grid* cg, int scan_id, int what_to_print) {
     if (!cg || !cg->grid) {

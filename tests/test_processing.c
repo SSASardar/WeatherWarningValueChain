@@ -26,9 +26,9 @@ int main() {
 
 // Defining the cartesian grid resolution:
 
-    double cart_grid_res = 25.0;
+    double cart_grid_res = 50.0;
 	int num_x, num_y;
-int target_radar_id = 2;
+int target_radar_id = 1;
 
 
 // defining VPR:
@@ -94,18 +94,33 @@ for (int i = 0; i < scan_count; ++i) {
 			    cg->height_grid[idA] = p_box->height_grid[p_grid_idx];
 			    //cg->grid[idA] = p_box->grid[p_grid_idx];
 
+            // Debugging: Check p_box height
+            if (p_box->height_grid[p_grid_idx] == 0) {
+                printf("DEBUG: scan %d, polar grid height zero at (range_idx=%d, angle_idx=%d)\n",
+                        radar_scans[i].scan_index, range_idx, angle_idx);
+            }
+
+
 			    if (p_box->grid[p_grid_idx] == 0) {
 			    cg->grid[idA] = p_box->grid[p_grid_idx];
 			    } else {
 			    cg->grid[idA] = get_reflectivity_at_height(VPR_strat, p_box->height_grid[p_grid_idx]);
 			    }
+
+            // Debugging: Check cartesian grid height
+            if (cg->height_grid[idA] == 0) {
+                printf("DEBUG: scan %d, cart grid height zero at (xi=%d, yi=%d)\n",
+                        radar_scans[i].scan_index, xi, yi);
+            }
+
+
 			    cg->attenuation_grid[3*(idA)+0] =p_box->attenuation_grid[3*p_grid_idx + 0];
 			    cg->attenuation_grid[3*(idA)+1] =p_box->attenuation_grid[3*p_grid_idx + 1];
 			    cg->attenuation_grid[3*(idA)+2] =p_box->attenuation_grid[3*p_grid_idx + 2]; 
 
 			} else {
-			    cg->grid[idA] = -1.0;// Handle point outside polar box
-			    cg->height_grid[idA] = -1.0;// Handle point outside polar box
+			    cg->grid[idA] = NAN;// Handle point outside polar box
+			    cg->height_grid[idA] = NAN;// Handle point outside polar box
 			    cg->attenuation_grid[3*(idA)+0] =-1.0; 
 			    cg->attenuation_grid[3*(idA)+1] =-1.0; 
 			    cg->attenuation_grid[3*(idA)+2] =-1.0; 
@@ -135,8 +150,6 @@ for (int i = 0; i < scan_count; ++i) {
 
     return 0;
 }
-
-
 
 
 

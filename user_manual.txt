@@ -154,7 +154,69 @@ CARTESIAN FORM OF RADAR IMAGES:
 
 
 
+GRAPHS FOR TRUE VS MEASURED COMPARISON (folders F),
 
+	you need files in the :
+				stats.txt,
+				radar_scan_0000.txt, (with other numbers...)
+				disp_g_0000.txt, (with other numbers.... 0000 up to and including 0053 in my case.)
+				true_g_0000.txt, (with other numbers.... 0000 up to and including 0053 in my case.)
+	
+
+	you need to edit and run the following test files in the tests/ folder:
+
+				test_command_centre.c
+				test_volume_scan.c
+
+
+
+	instructions for:
+
+					radar_scan_0000.txt (and others like it)
+
+						IN test_command_centre.c						
+
+						set the start and end time of each command (the volume scan):
+							the volume scan is defined as a fixed 16 PPI scans every 5 minutes.
+							The radar id scanned with is set in the command_centre.c file. should still be changed. 
+	
+						set your raincell parameters (these still will change) in create_raincell() function. 
+
+						define the radar motion in create_spatial_raincell() function. 	
+
+						set your VPR parameters (in the fill_VPR_params() function).
+
+						define the radar types. 
+
+						run the test file test_command_centre.c
+
+
+					disp_g_*.txt
+					true_g_*.txt
+					stats.txt
+
+						IN test_eval_scans.c
+
+						set the NUM_SCANS to the right amount in the definition at the top. 
+
+						ensure that the VPR, the radars, the raincells are all the same.	
+
+						set the cartesian grid resolution as you like. 
+
+						run the test file test_eval_scans.c
+
+	Getting to the graphs:
+
+		The graphs are a graph of the statistics over the simulation time, or an animation of the measured vs true raincell to help understand the graph. 
+	
+			For the graph of stats (based on the stats.txt): 
+
+				run $ python visualisations/extra_scan_stats.py 
+
+			For the animation
+				run $ python visualisations/animate_full_time.py
+
+		The plots can be found in the plots folder in the repository. 				
 
 
 RUNNING TESTS:

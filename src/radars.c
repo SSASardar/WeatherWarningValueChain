@@ -630,12 +630,12 @@ int fill_polar_box(Polar_box* polar_box, double time,
     polar_box->min_range_gate = floor((sin((dist_s - radius_stratiform)/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
     polar_box->max_range_gate = ceil((sin((dist_s + radius_stratiform)/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
 
-    polar_box->min_angle = floor((angle - del_angle) / polar_box->angular_resolution);
-    polar_box->max_angle = ceil((angle + del_angle) / polar_box->angular_resolution);
+    polar_box->min_angle = floor((angle - del_angle));
+    polar_box->max_angle = ceil((angle + del_angle));
 
     // Dynamically compute sizes
-    int num_ranges = (int)(polar_box->max_range_gate - polar_box->min_range_gate + 1);
-    int num_angles = (int)(polar_box->max_angle - polar_box->min_angle + 1);
+    int num_ranges = (int)lround(polar_box->max_range_gate - polar_box->min_range_gate + 1);
+    int num_angles = (int)lround((polar_box->max_angle - polar_box->min_angle + 1)/ polar_box->angular_resolution);
 
     // Only reallocate if size changed or not allocated yet
     if (!polar_box->grid || (int)polar_box->num_ranges != num_ranges || (int)polar_box->num_angles != num_angles) {
@@ -966,7 +966,7 @@ box->num_angles = num_angles;
         double sample_height = calculate_height_of_beam_at_range(r1, box->other_angle, h0);
 
         for (int ai = 0; ai < num_angles; ai++) {
-            double a1 = (box->min_angle + ai + 0.5) * box->angular_resolution;
+            double a1 = (box->min_angle + ai + (box->angular_resolution/2));
             int sample = sample_from_relative_location_in_raincell(r1, a1, box->other_angle, pos_radar, pos_raincell, raincell);
 
             // Flattened grid write
