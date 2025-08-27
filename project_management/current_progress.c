@@ -44,13 +44,13 @@ void print_progress() {
 	{
 		"Radar config. & contr.",
 		{
-			{"Reading in commands",80},
-			{"Validating commands",70},
-			{"Executing commands", 10},
+			{"Reading in commands",50},
+			{"Validating commands",40},
+			{"Executing commands", 50},
 			{"Checking for new files",60},
 			{"Saving radar outputs",90},
 			{"Generating command list",0},
-			{"Processing instructions",0},
+			{"Processing instructions",31},
 		},
 		6
 	},
@@ -61,7 +61,7 @@ void print_progress() {
 			{"Cartesian spatial interpolation", 90},
 			{"Temporal interpolation", 5},
 			{"Reconstruction of VPR",5},
-			{"PPI/vol scan to rainfall rate", 20},
+			{"PPI/vol scan to rainfall rate", 65},
 			{"PPI-PPI to rainfall rate", 20},
 			{"PPI-PPI-RHI to rainfall rate", 5},
 			{"PPI-RHI to rainfall rate", 5},
@@ -120,7 +120,7 @@ void print_progress() {
             char progress[21];
             int stars = categories[i].tasks[j].completion / 5;
             for (int k = 0; k < 20; k++) {
-                progress[k] = (k < stars) ? '*' : '.';
+                progress[k] = (k < stars) ? '#' : '.';
             }
             progress[20] = '\0';
 
@@ -147,10 +147,10 @@ void print_progress() {
 	
     const char* legend =
         "\n                                                         Legend:\n\n"
-        "                                                              ****................ (≤ 30%%): Idea\n"
-        "                                                              **********.......... (≤ 50%%): Functioning implementation\n"
-        "                                                              ****************.... (≤ 85%%): Test-ready, but can be improved\n"
-        "                                                              ******************** (100%%): Complete and satisfying\n";
+        "                                                              ####................ (≤ 30%%): Idea\n"
+        "                                                              ##########.......... (≤ 50%%): Functioning implementation\n"
+        "                                                              ################.... (≤ 85%%): Test-ready, but can be improved\n"
+        "                                                              #################### (100%%): Complete and satisfying\n";
 
     printf("\n\n\n%s\n\n\n", legend);
     fprintf(file, "%s", legend);
