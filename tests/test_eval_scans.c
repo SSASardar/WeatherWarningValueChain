@@ -23,7 +23,28 @@ typedef struct {
     double total_true_mm2;        // area-corrected total in mm*h per km²
 } RainfallStats;
 
+int write_heights_for_point(Vol_scan *vol, int xi, int yi, const char *filename) {
+    if (!vol || !vol->grid_height || !vol->grid_refl) return -1;
 
+    FILE *fp = fopen(filename, "w");
+    if (!fp) return -1;
+
+    size_t idx = xi * vol->num_y + yi;
+
+    fprintf(fp, "# Heights for point (%d, %d) across %d PPIs\n", xi, yi, vol->num_PPIs);
+    fprintf(fp, "# Format: PPI_index Height\n");
+
+    for (int ppi = 0; ppi < vol->num_PPIs; ppi++) {
+        size_t grid_idx = idx + ppi * vol->num_elements;
+        double refl = vol->grid_refl[grid_idx];
+
+            double height = vol->grid_height[grid_idx];
+            fprintf(fp, "%d %.2f\n", ppi, height);
+    }
+
+    fclose(fp);
+    return 0;
+}
 
 int main() {
     clock_t start = clock();
@@ -202,7 +223,6 @@ if (fp) {
     }
 
 
-
 // --- Write display_grid to file ---
 char disp_filename[256];
 snprintf(disp_filename, sizeof(disp_filename), "outputs/disp_g_%04d.txt", scan_idx);
@@ -217,7 +237,15 @@ if (write_true_grid_to_file(vol, true_filename) != 0) {
     fprintf(stderr, "Failed to write true grid to %s\n", true_filename);
 }
 
+int xA = vol->num_x/2;
+int yA = vol->num_y/2;
 
+char point_height_file[256];
+snprintf(point_height_file, sizeof(point_height_file), "outputs/heights_point_%04d.txt", scan_idx);
+
+if (write_heights_for_point(vol, xA, yA, point_height_file) != 0) {
+    fprintf(stderr, "Failed to write heights for point (%d,%d)\n", xA, yA);
+}
 
     // Free memory
     for (int i = 0; i < cg_count; i++)

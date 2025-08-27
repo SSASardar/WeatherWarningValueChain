@@ -449,6 +449,16 @@ int add_cart_grid_to_volscan(Vol_scan *vol, Cart_grid *grid, int ppi_index) {
     if (!vol || !grid) return -1;
     if (ppi_index < 0 || ppi_index >= vol->num_PPIs) return -2;
 
+// --- Resolution consistency check ---
+    double tol = 1e-6;  // tolerance for floating-point comparison
+    if (fabs(grid->resolution - vol->resolution) > tol) {
+        fprintf(stderr,
+                "Resolution mismatch: grid=%.6f vol=%.6f\n",
+                grid->resolution, vol->resolution);
+        return -3; // or handle gracefully
+    }
+
+
     double res = grid->resolution;
 
         for (int x = 0; x < grid->num_x; x++) {
@@ -457,14 +467,24 @@ int add_cart_grid_to_volscan(Vol_scan *vol, Cart_grid *grid, int ppi_index) {
             double abs_x = grid->ref_point.x + x * res;
             double abs_y = grid->ref_point.y + y * res;
 
-            int vol_x = (int)((abs_x - vol->ref_point.x) / res);
-            int vol_y = (int)((abs_y - vol->ref_point.y) / res);
+            int vol_x = (int)floor((abs_x - vol->ref_point.x) / res);
+            int vol_y = (int)floor((abs_y - vol->ref_point.y) / res);
 
             if (vol_x < 0 || vol_x >= vol->num_x || vol_y < 0 || vol_y >= vol->num_y) continue;
 
             int vol_idx = vol_index(vol, vol_x, vol_y, ppi_index);
+	  //  printf("local=(%d,%d) abs=(%.2f,%.2f) -> vol=(%d,%d)\n",x, y, abs_x, abs_y, vol_x, vol_y);
+            
+//	    printf("local=(%d,%d) abs=(%.2f,%.2f) "
+  //     "-> vol=(%d,%d) using res=%.2f (vol_res=%.2f)\n",
+    //   x, y, abs_x, abs_y, vol_x, vol_y, grid->resolution, vol->resolution);
 
-            vol->grid_refl[vol_idx]   = grid->grid ? grid->grid[local_idx] : NAN;
+//printf("local=(%d,%d) height=%.2f -> vol=(%d,%d)\n",
+  //     x, y,
+    //   grid->height_grid ? grid->height_grid[local_idx] : NAN,
+//       vol_x, vol_y);	    
+	    
+	    vol->grid_refl[vol_idx]   = grid->grid ? grid->grid[local_idx] : NAN;
             vol->grid_height[vol_idx] = grid->height_grid ? grid->height_grid[local_idx] : NAN;
             vol->grid_att[vol_idx]    = grid->attenuation_grid ? grid->attenuation_grid[local_idx] : NAN;
         }
