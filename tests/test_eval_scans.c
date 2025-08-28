@@ -172,9 +172,9 @@ Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
                     if (p_box->grid[p_grid_idx] == 0)
                         cg->grid[idA] = p_box->grid[p_grid_idx];
                     else if (p_box->grid[p_grid_idx] == 1)
-                        cg->grid[idA] = get_reflectivity_at_height(VPR_strat, p_box->height_grid[p_grid_idx]);
+                        cg->grid[idA] = add_noise(radar, get_reflectivity_at_height(VPR_strat, p_box->height_grid[p_grid_idx]));
                     else
-                        cg->grid[idA] = get_reflectivity_at_height(VPR_conv, p_box->height_grid[p_grid_idx]);
+                        cg->grid[idA] = add_noise(radar, get_reflectivity_at_height(VPR_conv, p_box->height_grid[p_grid_idx]));
 
                     for (int k = 0; k < 3; k++)
                         cg->attenuation_grid[3*idA+k] = p_box->attenuation_grid[3*p_grid_idx+k];
@@ -193,7 +193,8 @@ Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
     for (int i = 0; i < cg_count; i++)
         add_cart_grid_to_volscan(vol, cart_grids[i], i);
 
-compute_display_grid_max(vol,10.0);
+//compute_display_grid_max(vol,10.0);
+compute_display_grid_lowest_valid_height(vol,10.0);
 //compute_display_grid_min_above_threshold(vol,10.0);
     double true_time_min = radar_scans[scan_count-1].time +
                            (radar_scans[scan_count-1].time - radar_scans[scan_count-2].time);

@@ -590,6 +590,37 @@ vol->display_grid[base_idx] = (!found || max_val < threshold) ? NAN : max_val;
 }
 
 
+int compute_display_grid_lowest_valid_height(Vol_scan *vol, double threshold) {
+    if (!vol || !vol->grid_refl || !vol->display_grid || !vol->grid_height) return -1;
+
+    for (size_t x = 0; x < vol->num_x; x++) {
+        for (size_t y = 0; y < vol->num_y; y++) {
+            int base_idx = x * vol->num_y + y;  // index into display_grid
+            double refl = NAN;
+            double min_height = INFINITY;
+
+            for (int ppi = 0; ppi < vol->num_PPIs; ppi++) {
+                int idx = vol_index(vol, x, y, ppi);
+                double val = vol->grid_refl[idx];
+                double hgt = vol->grid_height[idx];
+
+                if (!isnan(val) && val >= threshold && hgt < min_height) {
+                    refl = val;
+                    min_height = hgt;
+                }
+            }
+
+            vol->display_grid[base_idx] = refl;
+        }
+    }
+
+    return 0;
+}
+
+
+
+
+
 int write_display_grid_to_file(const Vol_scan *vol, const char *filename) {
     if (!vol || !filename) return -1;
 

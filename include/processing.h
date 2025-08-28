@@ -71,6 +71,9 @@ int write_vol_scan_ppi_to_file(const Vol_scan *vol, int ppi_index, const char *f
 
 
 int compute_display_grid_max(Vol_scan *vol, double threshold);
+int compute_display_grid_lowest_valid_height(Vol_scan *vol, double threshold);
+
+
 
 int write_display_grid_to_file(const Vol_scan *vol, const char *filename); 
 int write_true_grid_to_file(const Vol_scan *vol, const char *filename); 

@@ -1611,3 +1611,45 @@ void free_polar_box(Polar_box *box) {
     free(box);  // Finally, free the struct itself
 }
 
+// Function to generate Gaussian noise
+double gaussian_noise(double mean, double stddev) {
+    static int hasSpare = 0;
+    static double spare;
+
+    if (hasSpare) {
+        hasSpare = 0;
+        return mean + stddev * spare;
+    }
+
+    hasSpare = 1;
+    double u, v, s;
+    do {
+        u = (rand() / ((double) RAND_MAX)) * 2.0 - 1.0;
+        v = (rand() / ((double) RAND_MAX)) * 2.0 - 1.0;
+        s = u * u + v * v;
+    } while (s >= 1 || s == 0);
+
+    s = sqrt(-2.0 * log(s) / s);
+    spare = v * s;
+    return mean + stddev * u * s;
+}
+
+// Function to add noise based on frequency
+double add_noise(const Radar* radar, double reflectivity) {
+    double noise_db = 0.0;
+
+    if (strcmp(radar->frequency, "X") == 0) {
+        noise_db = 3.0;
+    } else if (strcmp(radar->frequency, "C") == 0) {
+        noise_db = 1.0;
+    } else {
+        // Unknown frequency, no noise added
+        return reflectivity;
+    }
+
+    // Add Gaussian noise with 0 mean and noise_db as standard deviation
+    return reflectivity + gaussian_noise(0.0, noise_db);
+}
+
+
+

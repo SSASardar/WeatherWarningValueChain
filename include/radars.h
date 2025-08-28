@@ -157,6 +157,15 @@ void read_radar_scans(const char* filename);
 
 Bounding_box* bounding_box_from_textfile(const Polar_box* p_box, const Radar* radar);
 
+double gaussian_noise(double mean, double stddev);
+double add_noise(const Radar* radar, double reflectivity);
+
+
+
+
+
+
+
 
 //FREEING STUFF
 
