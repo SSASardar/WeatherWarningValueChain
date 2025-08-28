@@ -386,8 +386,8 @@ Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs) {
     size_t nx = (size_t)ceil((max_x - min_x) / res) + 1;
     size_t ny = (size_t)ceil((max_y - min_y) / res) + 1;
     size_t num_elements = nx * ny;
-
-    // 🔎 Debug logging of grid calculation
+/*
+    // Debug logging of grid calculation
     fprintf(stderr,
         "[DEBUG] init_vol_scan:\n"
         "  min_x=%.2f, max_x=%.2f, min_y=%.2f, max_y=%.2f\n"
@@ -396,7 +396,7 @@ Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs) {
         min_x, max_x, min_y, max_y,
         res, nx, ny, num_elements,
         num_PPIs, num_elements * (size_t)num_PPIs);
-
+*/
     // Sanity check
     if (num_elements > MAX_ALLOWED_CELLS || num_elements * (size_t)num_PPIs > MAX_ALLOWED_CELLS) {
         fprintf(stderr,

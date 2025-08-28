@@ -69,8 +69,8 @@ void generate_commands_file(int file_index, double start_time) {
         cmd.radar_id = 1;
         snprintf(cmd.scan_mode, sizeof(cmd.scan_mode), "PPI");
         cmd.raincell_id = 1;
+	cmd.other_angle = counter_A * ((M_PI_4/4) / (SCANS_PER_FILE+1)); // Exampe: 0–90
         counter_A++;
-	cmd.other_angle = counter_A * (M_PI_4 / (SCANS_PER_FILE+1)); // Exampe: 0–90
 								 //
 	if (counter_A == 8) counter_A =0;
         fprintf(file, "%.2f %d %s %d %.5f\n",
@@ -201,6 +201,11 @@ double time_in_sec = cmd->time * 60.0;
         log_message("Failed to fill polar box for command ID %d\n", cmd->command_id);
         return;
     }
+
+
+	update_other_angle(box, cmd->other_angle);
+
+
     Point* pos_raincell = get_position_raincell(time_in_sec, s_rc);
 log_message("Radar=(%.1f, %.1f), Raincell=(%.1f, %.1f), time=%.1f, angle=%.3f rad\n",
             radar->x, radar->y,

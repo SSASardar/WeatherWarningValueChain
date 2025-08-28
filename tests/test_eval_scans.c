@@ -29,22 +29,53 @@ int write_heights_for_point(Vol_scan *vol, int xi, int yi, const char *filename)
     FILE *fp = fopen(filename, "w");
     if (!fp) return -1;
 
-    size_t idx = xi * vol->num_y + yi;
+//    size_t idx = xi * vol->num_y + yi;
 
     fprintf(fp, "# Heights for point (%d, %d) across %d PPIs\n", xi, yi, vol->num_PPIs);
-    fprintf(fp, "# Format: PPI_index Height\n");
+    fprintf(fp, "# Format: PPI_index Reflectivity Height\n");
 
     for (int ppi = 0; ppi < vol->num_PPIs; ppi++) {
-        size_t grid_idx = idx + ppi * vol->num_elements;
-        double refl = vol->grid_refl[grid_idx];
+        //size_t grid_idx = idx + ppi * vol->num_elements;
+        size_t grid_idx = ppi * vol->num_x * vol->num_y + xi * vol->num_y + yi;
+	    double refl = vol->grid_refl[grid_idx];
 
             double height = vol->grid_height[grid_idx];
-            fprintf(fp, "%d %.2f\n", ppi, height);
+            //fprintf(fp, "%d %.2f\n", ppi, height);
+            fprintf(fp, "%d %.2f %.2f\n", ppi, refl, height);
     }
 
     fclose(fp);
     return 0;
 }
+
+
+int write_VPR_to_file(const VPR *vpr, const char *label, int scan_idx) {
+    if (!vpr || !label) return -1;
+
+    char filename[256];
+    snprintf(filename, sizeof(filename), "outputs/VPR_%s_%04d.txt", label, scan_idx);
+
+    FILE *fp = fopen(filename, "w");
+    if (!fp) {
+        fprintf(stderr, "Failed to open file %s for writing\n", filename);
+        return -1;
+    }
+
+    fprintf(fp, "# VPR data (%s) for scan %04d\n", label, scan_idx);
+    fprintf(fp, "# Format: PointName Reflectivity Height\n");
+
+    fprintf(fp, "ET   %.3f %.3f\n", vpr->ET.reflectivity,   vpr->ET.height);
+    fprintf(fp, "BB_u %.3f %.3f\n", vpr->BB_u.reflectivity, vpr->BB_u.height);
+    fprintf(fp, "BB_m %.3f %.3f\n", vpr->BB_m.reflectivity, vpr->BB_m.height);
+    fprintf(fp, "BB_l %.3f %.3f\n", vpr->BB_l.reflectivity, vpr->BB_l.height);
+    fprintf(fp, "CB   %.3f %.3f\n", vpr->CB.reflectivity,   vpr->CB.height);
+
+    fclose(fp);
+    return 0;
+}
+
+
+
 
 int main() {
     clock_t start = clock();
@@ -194,8 +225,11 @@ if (compute_rainfall_statistics(vol, 10.0, cart_grid_res,
     stats_array[scan_idx].bias = bias;
     stats_array[scan_idx].total_measured = total_measured;
     stats_array[scan_idx].total_true = total_true;
-    stats_array[scan_idx].total_measured_mm2 = total_measured_mm2;
-    stats_array[scan_idx].total_true_mm2 = total_true_mm2;
+
+    double time_for_volume_scan = 5.0*60.0;
+
+    stats_array[scan_idx].total_measured_mm2 = total_measured_mm2/time_for_volume_scan;
+    stats_array[scan_idx].total_true_mm2 = total_true_mm2/time_for_volume_scan;
 } else {
     stats_array[scan_idx].mse = stats_array[scan_idx].mae = stats_array[scan_idx].bias = NAN;
     stats_array[scan_idx].total_measured = stats_array[scan_idx].total_true = NAN;
@@ -237,8 +271,11 @@ if (write_true_grid_to_file(vol, true_filename) != 0) {
     fprintf(stderr, "Failed to write true grid to %s\n", true_filename);
 }
 
-int xA = vol->num_x/2;
-int yA = vol->num_y/2;
+//int xA = vol->num_x/2;
+//int yA = vol->num_y/2;
+int xA = 450;
+int yA = 300;
+
 
 char point_height_file[256];
 snprintf(point_height_file, sizeof(point_height_file), "outputs/heights_point_%04d.txt", scan_idx);
@@ -246,6 +283,9 @@ snprintf(point_height_file, sizeof(point_height_file), "outputs/heights_point_%0
 if (write_heights_for_point(vol, xA, yA, point_height_file) != 0) {
     fprintf(stderr, "Failed to write heights for point (%d,%d)\n", xA, yA);
 }
+
+if(scan_idx == 0) write_VPR_to_file(VPR_strat, "strat", scan_idx);
+write_VPR_to_file(VPR_conv,  "conv",  scan_idx);
 
     // Free memory
     for (int i = 0; i < cg_count; i++)
