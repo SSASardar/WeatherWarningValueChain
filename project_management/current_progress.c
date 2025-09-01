@@ -171,7 +171,7 @@ void print_progress() {
 	"aligning cartisian grids and merging the data.",
 	"Reconstructed VPR based on the measurement",
         "Correction factor to lowest reflectivity",
-	"Noise model of radar integration into sampling from VPR"
+	"Add attenuation in the processing step. as written in your notes.!! "
     };
 
     fprintf(file, "\n\n\nNext 5 tasks to prioritise (as of %s):\n", time_str);
