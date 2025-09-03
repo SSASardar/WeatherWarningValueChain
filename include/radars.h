@@ -8,21 +8,36 @@
 
 
 
-
 #ifndef RADARS_H
 #define RADARS_H
 
-#include "material_coords_raincell.h"
-#include "spatial_coords_raincell.h"
 #include "common.h"
-//#include "processing.h"
+#include <stdio.h>   // for FILE
+#include <stddef.h>  // for size_t
+		     //
+		     //
+struct Raincell;
+struct Spatial_raincell;
+struct VPR;
+struct VPR_params;
 struct Cart_grid;
 
 #define MAX_SCANS 1000
 #define MAX_RADARS 5
 #define KEA 1.333333333*6371000.0
 
-// Opaque defition of the radar structure
+
+// Example coefficients for k = a * Z^b [dB/km]
+// Literature values: (depends on drop size, you may adjust)
+// X-band: a ≈ 3.8e-5, b ≈ 0.91
+// C-band: a ≈ 1.5e-5, b ≈ 0.80
+// Source: Hitschfeld & Bordan (1954), Bringi & Chandrasekar (2001)
+#define A_COEFF_X 3.8e-5
+#define B_COEFF_X 0.91
+#define A_COEFF_C 1.5e-5
+#define B_COEFF_C 0.80
+
+
 typedef struct Radar {int id;
 char frequency[2];
 char scanning_mode[4];
@@ -101,7 +116,7 @@ Polar_box* create_polar_box(
 
 Polar_box* init_polar_box();
 void update_other_angle(Polar_box* p_box, double new_angle);
-int fill_polar_box(Polar_box* polar_box, double time, const Spatial_raincell* s_raincell, const Radar* radar, const Raincell* raincell);
+int fill_polar_box(Polar_box* polar_box, double time, const struct Spatial_raincell* s_raincell, const Radar* radar, const struct Raincell* raincell);
 
 void print_radar_specs(const Radar* radar);
 
@@ -147,23 +162,19 @@ Bounding_box* create_bounding_box_for_polar_box_EZ(const Polar_box* p_box);
 double calculate_height_of_beam_at_range(double range, double elevation, double height_of_radar);
 
 
-int sample_from_relative_location_in_raincell(double range, double angle, double elevation, const Point* radar_centre, const Point* spatial_centre, const Raincell* raincell);
+int sample_from_relative_location_in_raincell(double range, double angle, double elevation, const Point* radar_centre, const Point* spatial_centre, const struct Raincell* raincell);
 
-void fill_polar_box_grid(struct Polar_box* box, const struct Radar* radar, const struct Spatial_raincell* s_raincell, const struct Raincell* raincell, double time);
+void fill_polar_box_grid(struct Polar_box* box, const struct Radar* radar, const struct Spatial_raincell* s_raincell, const struct Raincell* raincell, double time, const struct VPR *vpr_strat, const struct VPR *vpr_conv);
 
 void save_polar_box_grid_to_file(const Polar_box* box, const Radar* radar, int scan_index,double scan_time, const char* filename);
-
+int read_n_doubles_from_stream(FILE *file,char *first_line,const char *prefix,int n,double *out,char *scratch,size_t scratch_sz);
 void read_radar_scans(const char* filename);
 
 Bounding_box* bounding_box_from_textfile(const Polar_box* p_box, const Radar* radar);
 
 double gaussian_noise(double mean, double stddev);
 double add_noise(const Radar* radar, double reflectivity);
-
-
-
-
-
+double compute_specific_attenuation(double refl_dBZ, const Radar* radar);
 
 
 

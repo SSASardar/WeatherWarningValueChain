@@ -1,7 +1,8 @@
-#include <stdio.h>
 #include "vertical_profiles.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 // Function to initialize all fields to zero
 void init_VPR_params(VPR_params *params) {
     if (!params) return; // safety check

@@ -18,7 +18,7 @@
 
 #define MAX_RAINCELLS 2
 
-// Opaque definition of raincell structure
+
 typedef struct Raincell {
 
 	int id;

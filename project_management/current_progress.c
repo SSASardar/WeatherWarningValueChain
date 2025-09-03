@@ -33,11 +33,11 @@ void print_progress() {
             {
                 {"Radar geometry (PPI)", 75},
 		{"Radar geometry (RHI)", 10},
-		{"Noise model", 5},
-		{"Attenuation model",60},
+		{"Noise model", 80},
+		{"Attenuation model",80},
 		{"Clutter model",5},
-		{"Getting lowest Z",5},
-		{"Measurement outputs",85}
+		{"Getting lowest Z",50},
+		{"Measurement outputs",90}
             },
             7
         },
@@ -45,12 +45,12 @@ void print_progress() {
 		"Radar config. & contr.",
 		{
 			{"Reading in commands",50},
-			{"Validating commands",40},
-			{"Executing commands", 50},
+			{"Validating commands",30},
+			{"Executing commands", 80},
 			{"Checking for new files",60},
 			{"Saving radar outputs",90},
 			{"Generating command list",0},
-			{"Processing instructions",31},
+			{"Processing instructions",30},
 		},
 		6
 	},
@@ -73,7 +73,7 @@ void print_progress() {
             "Meteorological product",
             {
 		{"Total rainfall accumulation",30},
-		{"True rainfall accumulation",5},
+		{"True rainfall accumulation",30},
 		{"(opt) Forecast", 0}
             },
             3
@@ -167,11 +167,11 @@ void print_progress() {
     // Manual: Next 5 tasks to do
     // -----------------------------
     const char* next_tasks[5] = {
-        "Combining the volume scans for 5min interval C-band",
-	"aligning cartisian grids and merging the data.",
-	"Reconstructed VPR based on the measurement",
-        "Correction factor to lowest reflectivity",
-	"Add attenuation in the processing step. as written in your notes.!! "
+        " implement quality metric on heights",
+	" correcting for bright band if melting layer height known",
+	" reconstructed VPR based on the measurement? ",
+        " combining X-band and C-band PPI's/vol scans...",
+	" making a RHI with X band"
     };
 
     fprintf(file, "\n\n\nNext 5 tasks to prioritise (as of %s):\n", time_str);

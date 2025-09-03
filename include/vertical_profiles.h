@@ -78,7 +78,6 @@ typedef struct VPR_params {
 		
 } VPR_params;
 
-
 // Assume these are ordered lowest to highest heights:
 VPR_point sorted_points[5];
 

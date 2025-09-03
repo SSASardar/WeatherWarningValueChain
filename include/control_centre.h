@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "radars.h"
+#include "vertical_profiles.h"
+
 
 // ---------------------- Command Structure ----------------------
 typedef struct {
@@ -24,17 +26,17 @@ FILE *open_log_file_with_timestamp(void);
 
 // Command handling
 bool validate_command(const Command *cmd);
-void execute_command(const Command *cmd, Polar_box *box, const char *filename);
+void execute_command(const Command *cmd, Polar_box *box, const char *filename, const VPR *vpr_strat, const VPR_params *params, VPR *vpr_conv);
 void printCommand(const Command *cmd);
 
 // File handling
-bool read_command_file_once(const char *filename);
+bool read_command_file_once(const char *filename, const VPR *vpr_strat, const VPR_params *params, VPR *vpr_conv);
 
 // Command generation
 void generate_commands_file(int file_index, double start_time);
 
 // Monitoring
-void monitor_and_process_inputs(void);
+void monitor_and_process_inputs(const VPR *vpr_strat,const VPR_params *params, VPR *vpr_conv);
 
 #endif // CONTROL_CENTRE_H
 

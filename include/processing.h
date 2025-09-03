@@ -1,16 +1,14 @@
-
-
-
 #ifndef PROCESSING_H
 #define PROCESSING_H
 
-#include<stdbool.h>
-#include"radars.h"
+#include <stdbool.h>
+#include <stddef.h> 
 #include "common.h"
-#include <stdio.h>
-#include "vertical_profiles.h"
-#include "spatial_coords_raincell.h"
+#include "radars.h"
 #include "material_coords_raincell.h"
+#include "spatial_coords_raincell.h"
+#include "vertical_profiles.h"
+
 
 typedef struct Cart_grid {
 	double resolution;

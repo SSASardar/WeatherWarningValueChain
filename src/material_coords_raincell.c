@@ -11,31 +11,10 @@
 
 // include statements: 
 #include "material_coords_raincell.h"
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-//#include "true_vertical_profile.h"
 #include "common.h"
-
-
-
-/*
-// Structure of a raincell
-
-struct Raincell {
-	int id;
-	double radius_core;
-	double radius_stratiform;
-	double offset_centre_core;
-	double top_height_stratiform;
-	//double top_height_core;
-	double max_top_height_core;
-	double onset_time_growth;
-	double stop_time_growth;
-	double onset_time_decay;
-	double stop_time_decay;
-};
-*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 
 //global registries:

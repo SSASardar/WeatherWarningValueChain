@@ -3,11 +3,12 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <math.h>
+
 extern double height;
+
 #define RAD2DEG (180.0 / M_PI)
-#define DEG2RAD (M_PI/180)
-
-
+#define DEG2RAD (M_PI / 180.0)
 typedef struct Point {
 	double x;
 	double y;

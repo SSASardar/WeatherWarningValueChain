@@ -5,16 +5,16 @@
 
 // include statements:
 #include "processing.h"
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-//#include "radars.h"
 #include "spatial_coords_raincell.h"
 #include "material_coords_raincell.h"
 #include "common.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
 #include <ctype.h>
 #include <float.h>
+
 
 #define MAX_ALLOWED_CELLS ((size_t)1e9)  // ~1 billion doubles = ~8 GB
 
@@ -30,7 +30,7 @@ Cart_grid* Cart_grid_init(double resolution, int num_x, int num_y, Point ref_poi
 
     cg->grid = (double *)malloc(sizeof(double) * cg->num_elements);
     cg->height_grid = (double *)malloc(sizeof(double)*cg->num_elements);
-    cg->attenuation_grid = (double *)malloc(sizeof(double)*3*cg->num_elements);
+    cg->attenuation_grid = (double *)malloc(sizeof(double) * cg->num_elements);
     
     if (!cg->grid) {
         free(cg);
@@ -41,9 +41,7 @@ Cart_grid* Cart_grid_init(double resolution, int num_x, int num_y, Point ref_poi
     for (int i = 0; i < cg->num_elements; i++) {
         cg->grid[i] = 0.0;
     	cg->height_grid[i] = 0.0;
-    	cg->attenuation_grid[3*i+0]=0.0;
-    	cg->attenuation_grid[3*i+1]=0.0;
-    	cg->attenuation_grid[3*i+2]=0.0;
+    	cg->attenuation_grid[i]=0.0;
     }
 	//printf("success I think? \n");
     return cg;
@@ -193,7 +191,7 @@ FILE *fp = fopen(filename, "w");
             int index = x * cg->num_y + y;
 	    if (what_to_print == 0) fprintf(fp, "%.2f ", cg->grid[index]);  // format as needed
             if (what_to_print == 1) fprintf(fp, "%.2f ", cg->height_grid[index]);  // format as needed
-    	    if (what_to_print == 2) fprintf(fp,  "%.2f ", 0.00*cg->attenuation_grid[3*index+0]+1.0*cg->attenuation_grid[3*index+1]+2.0*cg->attenuation_grid[3*index+2]);    
+    	    if (what_to_print == 2) fprintf(fp,  "%.2f ", cg->attenuation_grid[index]);    
     }
         fprintf(fp, "\n");  // newline after each row
     }
@@ -201,158 +199,6 @@ FILE *fp = fopen(filename, "w");
     fclose(fp);
     printf("Grid successfully written to cartesian_grid_output.txt\n");
 }
-
-/*
-void generate_attenuation_grid(Cartesian_grid* cg) {
-	double temp_var;
-	for (int i = 0 ; i < cg->num_elements;i++){
-		temp_var = cg->grid[i];
-		if (temp_var == 0.0) cg->attenuation_grid[3*i+0]
-	}
-
-
-
-
-
-}
-*/
-/*Vol_scan *init_vol_scan(Cart_grid *cart_grids, int num_PPIs) {
-    if (!cart_grids || num_PPIs <= 0) return NULL;
-
-    Vol_scan *vol = (Vol_scan *)malloc(sizeof(Vol_scan));
-    if (!vol) return NULL;
-
-    vol->num_PPIs = num_PPIs;
-
-    double min_x = DBL_MAX, min_y = DBL_MAX;
-    double max_x = -DBL_MAX, max_y = -DBL_MAX;
-
-    for (int i = 0; i < num_PPIs; i++) {
-        Cart_grid *g = &cart_grids[i];
-        if (g->ref_point.x < min_x) min_x = g->ref_point.x;
-        if (g->ref_point.y < min_y) min_y = g->ref_point.y;
-        double g_max_x = g->ref_point.x + g->resolution * (g->num_x - 1);
-        double g_max_y = g->ref_point.y + g->resolution * (g->num_y - 1);
-        if (g_max_x > max_x) max_x = g_max_x;
-        if (g_max_y > max_y) max_y = g_max_y;
-    }
-
-    vol->ref_point.x = min_x;
-    vol->ref_point.y = min_y;
-
-    double res = cart_grids[0].resolution;
-    vol->num_x = (int)ceil((max_x - min_x) / res) + 1;
-    vol->num_y = (int)ceil((max_y - min_y) / res) + 1;
-    vol->num_elements = vol->num_x * vol->num_y;
-
-
-    vol->resolution  = cart_grids[0].resolution;
-
-    vol->grid_refl   = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
-    vol->grid_height = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
-    vol->grid_att    = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
-    vol->display_grid = (double *)calloc(vol->num_elements, sizeof(double));
-
-    if (!vol->grid_refl || !vol->grid_height || !vol->grid_att || !vol->display_grid) {
-        free(vol->grid_refl); free(vol->grid_height); free(vol->grid_att); free(vol->display_grid);
-        free(vol);
-        return NULL;
-    }
-
-    for (int i = 0; i < vol->num_elements * num_PPIs; i++) {
-        vol->grid_refl[i] = NAN;
-        vol->grid_height[i] = NAN;
-        vol->grid_att[i] = NAN;
-    }
-
-    return vol;
-}
-*/
-
-
-
-/*Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs) {
-    if (!cart_grids || num_PPIs <= 0) return NULL;
-
-    Vol_scan *vol = (Vol_scan *)malloc(sizeof(Vol_scan));
-    if (!vol) return NULL;
-
-    vol->num_PPIs = num_PPIs;
-
-    double min_x = DBL_MAX, min_y = DBL_MAX;
-    double max_x = -DBL_MAX, max_y = -DBL_MAX;
-
-    for (int i = 0; i < num_PPIs; i++) {
-        Cart_grid *g = cart_grids[i];
-        if (!g) continue;
-
-        if (g->ref_point.x < min_x) min_x = g->ref_point.x;
-        if (g->ref_point.y < min_y) min_y = g->ref_point.y;
-        double g_max_x = g->ref_point.x + g->resolution * (g->num_x - 1);
-        double g_max_y = g->ref_point.y + g->resolution * (g->num_y - 1);
-        if (g_max_x > max_x) max_x = g_max_x;
-        if (g_max_y > max_y) max_y = g_max_y;
-    }
-
-    vol->ref_point.x = min_x;
-    vol->ref_point.y = min_y;
-
-    double res = cart_grids[0]->resolution;
-//     vol->num_x = (int)ceil((max_x - min_x) / res) + 1;
-//    vol->num_y = (int)ceil((max_y - min_y) / res) + 1;
-//    vol->num_elements = vol->num_x * vol->num_y;
-//	
-
-size_t nx = (size_t)ceil((max_x - min_x) / res) + 1;
-size_t ny = (size_t)ceil((max_y - min_y) / res) + 1;
-size_t num_elements = nx * ny;
-
-if (num_elements > MAX_ALLOWED_CELLS) {
-    fprintf(stderr, "Error: grid too large (%zu cells)\n", num_elements);
-    free(vol);
-    return NULL;
-}
-
-size_t total_cells = num_elements * (size_t)num_PPIs;
-
-if (total_cells > MAX_ALLOWED_CELLS) {
-    fprintf(stderr, "Error: volume too large (%zu cells)\n", total_cells);
-    free(vol);
-    return NULL;
-}
-vol->num_x = nx; 
-vol->num_y = ny; 
-vol->num_elements = vol->num_x * vol->num_y;
-
-
-    vol->resolution  = res;
-
-    vol->grid_refl    = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
-    vol->grid_height  = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
-    vol->grid_att     = (double *)calloc(vol->num_elements * num_PPIs, sizeof(double));
-    vol->display_grid = (double *)calloc(vol->num_elements, sizeof(double));
-    vol->refl_ALA     = (double *)calloc(vol->num_elements, sizeof(double));
-
-    if (!vol->grid_refl || !vol->grid_height || !vol->grid_att || !vol->display_grid || !vol->refl_ALA) {
-        free(vol->grid_refl); free(vol->grid_height); free(vol->grid_att);
-        free(vol->display_grid); free(vol->refl_ALA); free(vol);
-        return NULL;
-    }
-
-    for (int i = 0; i < vol->num_elements * num_PPIs; i++) {
-        vol->grid_refl[i]   = NAN;
-        vol->grid_height[i] = NAN;
-        vol->grid_att[i]    = NAN;
-    }
-
-    for (int i = 0; i < vol->num_elements; i++) {
-        vol->display_grid[i] = NAN;
-        vol->refl_ALA[i]     = NAN;
-    }
-
-    return vol;
-}
-*/
 
 Vol_scan *init_vol_scan(Cart_grid **cart_grids, int num_PPIs) {
     if (!cart_grids || num_PPIs <= 0) return NULL;
@@ -493,38 +339,6 @@ int add_cart_grid_to_volscan(Vol_scan *vol, Cart_grid *grid, int ppi_index) {
     return 0;
 }
 
-
-/*
-int add_cart_grid_to_volscan(Vol_scan *vol, Cart_grid *grid, int ppi_index) {
-    if (!vol || !grid) return -1;
-    if (ppi_index < 0 || ppi_index >= vol->num_PPIs) return -2;
-
-    double res = (vol->num_x > 1) ? 
-                 (vol->num_x - 1) / ((grid->ref_point.x + grid->num_x*grid->resolution - vol->ref_point.x) / (vol->num_x - 1)) : grid->resolution;
-
-    for (int y = 0; y < grid->num_y; y++) {
-        for (int x = 0; x < grid->num_x; x++) {
-            int local_idx = y * grid->num_x + x;
-
-            double abs_x = grid->ref_point.x + x * grid->resolution;
-            double abs_y = grid->ref_point.y + y * grid->resolution;
-
-            int vol_x = (int)round((abs_x - vol->ref_point.x) / res);
-            int vol_y = (int)round((abs_y - vol->ref_point.y) / res);
-
-            if (vol_x < 0 || vol_x >= vol->num_x || vol_y < 0 || vol_y >= vol->num_y) continue;
-
-            int vol_idx = vol_index(vol, vol_x, vol_y, ppi_index);
-
-            vol->grid_refl[vol_idx]   = grid->grid ? grid->grid[local_idx] : NAN;
-            vol->grid_height[vol_idx] = grid->height_grid ? grid->height_grid[local_idx] : NAN;
-            vol->grid_att[vol_idx]    = grid->attenuation_grid ? grid->attenuation_grid[local_idx] : NAN;
-        }
-    }
-
-    return 0;
-}
-*/
 
 void free_vol_scan(Vol_scan *vol) {
     if (!vol) return;
@@ -691,46 +505,6 @@ int classify_point_in_raincell(const Point *pt, const Point *raincell_center, co
         return 1; // stratiform
     }
 }
-/*
-int fill_refl_ALA_grid(Vol_scan *vol, const Point *raincell_center, const Raincell *raincell, const VPR *vpr_1, const VPR *vpr_2) {
-    if (!vol) return -1;
-
-    // Allocate Refl_ALA if needed
-    if (!vol->refl_ALA) {
-        vol->refl_ALA = (double*)malloc(sizeof(double) * vol->num_x * vol->num_y);
-        if (!vol->refl_ALA) {
-            perror("Failed to allocate memory for Refl_ALA");
-            return -1;
-        }
-    }
-
-    // Loop over all grid points
-        for (int x = 0; x < vol->num_x; x++) {
-    for (int y = 0; y < vol->num_y; y++) {
-            int idx = x * vol->num_y + y;
-            //int idx = (vol->num_x - 1 - x) * vol->num_y + y;
-
-            // Compute physical coordinates of this point
-            Point pt;
-            pt.x = vol->ref_point.x + x * vol->resolution;
-            pt.y = vol->ref_point.y + y * vol->resolution;
-
-            //vol->refl_ALA[idx] = classify_point_in_raincell(&pt, raincell_center, raincell);
-        
-	    if ( classify_point_in_raincell(&pt, raincell_center, raincell) == 0) {
-	    	vol->refl_ALA[idx] = 0; 
-	    } else  if ( classify_point_in_raincell(&pt, raincell_center, raincell) == 1) {
-	    	vol->refl_ALA[idx] = vpr_1->CB.reflectivity;
-	    } else  if ( classify_point_in_raincell(&pt, raincell_center, raincell) == 2) {
-	    	vol->refl_ALA[idx] = vpr_2->CB.reflectivity;
-	    }
-	}
-    }
-
-    return 0;
-}
-*/
-
 int fill_refl_ALA_grid(Vol_scan *vol,
                        const Point *raincell_center,
                        const Raincell *raincell,
@@ -801,51 +575,6 @@ int fill_refl_ALA_grid(Vol_scan *vol,
 
 
 
-/*
-
-int compute_rainfall_statistics(const Vol_scan *vol, double *mse, double *mae, double *bias) {
-    if (!vol || !vol->display_grid || !vol->refl_ALA || !mse || !mae || !bias) return -1;
-
-    double sum_sq_error = 0.0;
-    double sum_abs_error = 0.0;
-    double sum_error = 0.0;
-    int count = 0;
-
-    for (int i = 0; i < vol->num_elements; i++) {
-        double dBZ_disp = vol->display_grid[i];
-        double dBZ_true = vol->refl_ALA[i];
-
-        // Treat NaN in display grid as 0
-        if (isnan(dBZ_disp)) dBZ_disp = 0.0;
-
-        // Skip if true value is NaN
-        //if (isnan(dBZ_true)) continue;
-
-        // Convert dBZ to linear Z
-        double Z_disp = pow(10.0, dBZ_disp / 10.0);
-        double Z_true = pow(10.0, dBZ_true / 10.0);
-
-        // Marshall-Palmer: R = (Z / 200)^(1/1.6)
-        double R_disp = pow(Z_disp / 200.0, 1.0 / 1.6);
-        double R_true = pow(Z_true / 200.0, 1.0 / 1.6);
-
-        double error = R_disp - R_true;
-        sum_error += error;
-        sum_sq_error += error * error;
-        sum_abs_error += fabs(error);
-        count++;
-    }
-
-    if (count == 0) return -2; // no valid data points
-
-    *mse = sum_sq_error / count;
-    *mae = sum_abs_error / count;
-    *bias = sum_error / count;
-
-    return 0;
-}
-*/
-
 void free_cart_grid(Cart_grid *cg) {
     if (!cg) return;
     free(cg->grid);
@@ -853,50 +582,6 @@ void free_cart_grid(Cart_grid *cg) {
     free(cg->attenuation_grid);
     free(cg);
 }
-
-
-/*
-int compute_rainfall_statistics(const Vol_scan *vol, double threshold, double *mse, double *mae, double *bias) {
-    if (!vol || !vol->display_grid || !vol->refl_ALA || !mse || !mae || !bias) return -1;
-
-    double sum_sq_error = 0.0;
-    double sum_abs_error = 0.0;
-    double sum_error = 0.0;
-    int count = 0;
-
-    for (int i = 0; i < vol->num_elements; i++) {
-        double dBZ_disp = vol->display_grid[i];
-        double dBZ_true = vol->refl_ALA[i];
-
-        // Skip if either value is NaN
-        if (isnan(dBZ_disp) || isnan(dBZ_true)) continue;
-
-        // Skip if display value below threshold
-        if (dBZ_disp < threshold) continue;
-
-        // Convert dBZ to linear Z
-        double Z_disp = pow(10.0, dBZ_disp / 10.0);
-        double Z_true = pow(10.0, dBZ_true / 10.0);
-
-        // Marshall-Palmer: R = (Z / 200)^(1/1.6)
-        double R_disp = pow(Z_disp / 200.0, 1.0 / 1.6);
-        double R_true = pow(Z_true / 200.0, 1.0 / 1.6);
-
-        double error = R_disp - R_true;
-        sum_error += error;
-        sum_sq_error += error * error;
-        sum_abs_error += fabs(error);
-        count++;
-    }
-
-    if (count == 0) return -2; // no valid data points
-
-    *mse = sum_sq_error / count;
-    *mae = sum_abs_error / count;
-    *bias = sum_error / count;
-
-    return 0;
-}*/
 
 
 int compute_rainfall_statistics(const Vol_scan *vol, double threshold, double grid_res,

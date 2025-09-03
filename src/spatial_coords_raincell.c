@@ -7,13 +7,11 @@
 
 // include statements
 #include "spatial_coords_raincell.h"
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
 #include "material_coords_raincell.h"
 #include "common.h"
-
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 
 

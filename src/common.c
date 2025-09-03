@@ -4,10 +4,10 @@
 //
 
 
+#include "common.h"
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include "common.h"
 
 
 double get_bounding_box_time(const Bounding_box* box) {

@@ -1,15 +1,17 @@
+#include "common.h"
+#include "radars.h"
+#include "processing.h"
+#include "material_coords_raincell.h"
+#include "spatial_coords_raincell.h"
+#include "vertical_profiles.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <stdbool.h>
 #include <float.h>
-#include "radars.h"
-#include "material_coords_raincell.h"
-#include "spatial_coords_raincell.h"
-#include "common.h"
-#include "processing.h"
-#include "vertical_profiles.h"
+
 
 #define NUM_SCANS 54  // 0..53
     
@@ -115,7 +117,7 @@ int main() {
 
 
     Raincell* raincell = create_raincell(1, 0.5, 10000.0, -0.5, 1000.0, 8000.0, 60.0*60.0, 180.0*60.0, 210.0*60.0, 270.0*60.0);   
-Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
+Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0,6);
 
     double cart_grid_res = 25;
 
@@ -168,20 +170,12 @@ Spatial_raincell* s_raincell = create_spatial_raincell(1, -120000.0,80000.0, 6);
                 if (getPolarBoxIndex(p, radar->x, radar->y, p_box, &range_idx, &angle_idx)) {
                     int p_grid_idx = range_idx * (int)p_box->num_angles + angle_idx;
                     cg->height_grid[idA] = p_box->height_grid[p_grid_idx];
-
-                    if (p_box->grid[p_grid_idx] == 0)
-                        cg->grid[idA] = p_box->grid[p_grid_idx];
-                    else if (p_box->grid[p_grid_idx] == 1)
-                        cg->grid[idA] = add_noise(radar, get_reflectivity_at_height(VPR_strat, p_box->height_grid[p_grid_idx]));
-                    else
-                        cg->grid[idA] = add_noise(radar, get_reflectivity_at_height(VPR_conv, p_box->height_grid[p_grid_idx]));
-
-                    for (int k = 0; k < 3; k++)
-                        cg->attenuation_grid[3*idA+k] = p_box->attenuation_grid[3*p_grid_idx+k];
+                    cg->grid[idA] = p_box->grid[p_grid_idx];
+                    cg->attenuation_grid[idA] = p_box->attenuation_grid[p_grid_idx];
                 } else {
                     cg->grid[idA] = NAN;
                     cg->height_grid[idA] = NAN;
-                    for (int k = 0; k < 3; k++) cg->attenuation_grid[3*idA+k] = NAN;
+	            cg->attenuation_grid[idA] = NAN;
                 }
             }
         }

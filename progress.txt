@@ -9,15 +9,15 @@
 +------------------------+----------------------------------+----------------------+
 | Model of radar         | Radar geometry (PPI)             | ###############..... |
 |                        | Radar geometry (RHI)             | ##.................. |
-|                        | Noise model                      | #................... |
-|                        | Attenuation model                | ############........ |
+|                        | Noise model                      | ################.... |
+|                        | Attenuation model                | ################.... |
 |                        | Clutter model                    | #................... |
-|                        | Getting lowest Z                 | #................... |
-|                        | Measurement outputs              | #################... |
+|                        | Getting lowest Z                 | ##########.......... |
+|                        | Measurement outputs              | ##################.. |
 +------------------------+----------------------------------+----------------------+
 | Radar config. & contr. | Reading in commands              | ##########.......... |
-|                        | Validating commands              | ########............ |
-|                        | Executing commands               | ##########.......... |
+|                        | Validating commands              | ######.............. |
+|                        | Executing commands               | ################.... |
 |                        | Checking for new files           | ############........ |
 |                        | Saving radar outputs             | ##################.. |
 |                        | Generating command list          | .................... |
@@ -32,7 +32,7 @@
 |                        | PPI-RHI to rainfall rate         | #................... |
 +------------------------+----------------------------------+----------------------+
 | Meteorological product | Total rainfall accumulation      | ######.............. |
-|                        | True rainfall accumulation       | #................... |
+|                        | True rainfall accumulation       | ######.............. |
 |                        | (opt) Forecast                   | .................... |
 +------------------------+----------------------------------+----------------------+
 | Hydrological product   | Entry rate of water into river   | ##.................. |
@@ -54,9 +54,9 @@
 
 
 
-Next 5 tasks to prioritise (as of 2025-08-26 18:11:51):
-  1. Combining the volume scans for 5min interval C-band
-  2. aligning cartisian grids and merging the data.
-  3. Reconstructed VPR based on the measurement
-  4. Correction factor to lowest reflectivity
-  5. Noise model of radar integration into sampling from VPR
+Next 5 tasks to prioritise (as of 2025-09-03 11:39:51):
+  1.  implement quality metric on heights
+  2.  correcting for bright band if melting layer height known
+  3.  reconstructed VPR based on the measurement? 
+  4.  combining X-band and C-band PPI's/vol scans...
+  5.  making a RHI with X band
