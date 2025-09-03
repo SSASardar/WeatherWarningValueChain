@@ -303,13 +303,13 @@ int fill_polar_box(Polar_box* polar_box, double time,
     // Compute min/max gates and angles
     polar_box->min_range_gate = floor((sin((dist_s - radius_stratiform)/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
     polar_box->max_range_gate = ceil((sin((dist_s + radius_stratiform)/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
-
-    polar_box->min_angle = floor((angle - del_angle));
-    polar_box->max_angle = ceil((angle + del_angle));
+	int padding_angle_deg = 2;
+    polar_box->min_angle = floor((angle - del_angle))-padding_angle_deg;
+    polar_box->max_angle = ceil((angle + del_angle)) + padding_angle_deg;
 
     // Dynamically compute sizes
     int num_ranges = (int)lround(polar_box->max_range_gate - polar_box->min_range_gate + 1);
-    int num_angles = (int)lround((polar_box->max_angle - polar_box->min_angle + 1)/ polar_box->angular_resolution);
+    int num_angles = (int)lround((polar_box->max_angle - polar_box->min_angle + 1 + 2*padding_angle_deg)/ polar_box->angular_resolution);
 
     // Only reallocate if size changed or not allocated yet
     if (!polar_box->grid || (int)polar_box->num_ranges != num_ranges || (int)polar_box->num_angles != num_angles) {
