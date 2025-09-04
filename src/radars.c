@@ -278,6 +278,12 @@ int fill_polar_box(Polar_box* polar_box, double time,
         return -1;
     }
 
+    if (cos(polar_box->other_angle) <= 0.0) {
+    fprintf(stderr,
+            "fill_polar_box: Unsupported elevation angle %.2f rad (cos<=0)\n",
+            polar_box->other_angle);
+    return -1;
+}
     double kea_and_radar = KEA + radar->z;
 
     Point* centre = get_position_raincell(time, s_raincell);//time in seconds.
@@ -301,9 +307,17 @@ int fill_polar_box(Polar_box* polar_box, double time,
     polar_box->radar_id = get_radar_id(radar);
 
     // Compute min/max gates and angles
-    polar_box->min_range_gate = floor((sin((dist_s - radius_stratiform)/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
-    polar_box->max_range_gate = ceil((sin((dist_s + radius_stratiform)/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
-	int padding_angle_deg = 2;
+    polar_box->min_range_gate = floor((sin((fabs(dist_s - radius_stratiform))/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
+    polar_box->max_range_gate = ceil((sin((fabs(dist_s + radius_stratiform))/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
+
+if (polar_box->min_range_gate > polar_box->max_range_gate) {
+    int tmp = polar_box->min_range_gate;
+    polar_box->min_range_gate = polar_box->max_range_gate;
+    polar_box->max_range_gate = tmp;
+}
+
+
+    int padding_angle_deg = 2;
     polar_box->min_angle = floor((angle - del_angle))-padding_angle_deg;
     polar_box->max_angle = ceil((angle + del_angle)) + padding_angle_deg;
 
@@ -630,7 +644,7 @@ box->num_angles = num_angles;
         double sample_height = calculate_height_of_beam_at_range(r1, box->other_angle, h0);
 
         for (int ai = 0; ai < num_angles; ai++) {
-            double a1 = (box->min_angle + ai + (box->angular_resolution/2));
+            double a1 = (box->min_angle + ai + 0.5)*box->angular_resolution;
  int sample = sample_from_relative_location_in_raincell(r1, a1, box->other_angle, pos_radar, pos_raincell, raincell);
 int idp = ri * num_angles + ai;
 int idp_min_one = idp;
@@ -644,24 +658,24 @@ if (sample == 0) { //raincell shape is always convex, so no strange things need 
         box->attenuation_grid[idp] = 0.0; 
 } else if (sample == 1) {
         refl_dBZ = get_reflectivity_at_height(vpr_strat, sample_height);
-        //att = compute_specific_attenuation(refl_dBZ, radar); 
-        att = 0.01; 
+        att = compute_specific_attenuation(refl_dBZ, radar); 
+       // att = 0.01; 
         if(idp == idp_min_one) {
                 box->attenuation_grid[idp] = att;
         } else {
                 box->attenuation_grid[idp] = att + box->attenuation_grid[idp_min_one];
         }
-        box->grid[idp] = add_noise(radar, refl_dBZ-box->attenuation_grid[idp]);
+        box->grid[idp] = add_noise(radar, refl_dBZ-2*box->attenuation_grid[idp]);
 } else {
         refl_dBZ = get_reflectivity_at_height(vpr_conv, sample_height);
-        //att = compute_specific_attenuation(refl_dBZ, radar); 
-        att = 0.02; 
+        att = compute_specific_attenuation(refl_dBZ, radar); 
+        //att = 0.02; 
         if(idp == idp_min_one) {
                 box->attenuation_grid[idp] = att;
         } else {
                 box->attenuation_grid[idp] = att + box->attenuation_grid[idp_min_one];
         }
-        box->grid[idp] = add_noise(radar, refl_dBZ-box->attenuation_grid[idp]);
+        box->grid[idp] = add_noise(radar, refl_dBZ-2*box->attenuation_grid[idp]);
 }
 
             // Flattened grid write

@@ -25,7 +25,7 @@
 int main() {
 
     clock_t start = clock();
-   double sim_time = 00.0; 
+   double sim_time = 165.0; 
    int max_vol_scans = (int)((270.0-sim_time)/5);
 //   int max_vol_scans = (int)((20.0-sim_time)/5);
    // Example: generate 3 command files automatically

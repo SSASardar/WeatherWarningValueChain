@@ -135,7 +135,7 @@ bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box,
 
     // Angular span covered by this polar box
     double span = box->num_angles * box->angular_resolution * DEG2RAD;
-
+/*
     // Difference relative to box min angle, wrapped
     double angle_diff = angle - min_angle;
     if (angle_diff < 0) angle_diff += 2 * M_PI;
@@ -143,6 +143,11 @@ bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box,
     // If angle is outside the actual span of the box, reject
     if (angle_diff > span)
         return false;
+*/
+
+double angle_diff = fmod(angle - min_angle + 2*M_PI, 2*M_PI);
+if (angle_diff > span) return false;
+
 
     // --- Range index (rounded) ---
     *range_idx = (int)floor((r - box->min_range_gate * box->range_resolution) /

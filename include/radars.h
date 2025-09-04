@@ -28,12 +28,12 @@ struct Cart_grid;
 
 
 // Example coefficients for k = a * Z^b [dB/km]
-// Literature values: (depends on drop size, you may adjust)
-// X-band: a ≈ 3.8e-5, b ≈ 0.91
-// C-band: a ≈ 1.5e-5, b ≈ 0.80
+// Literature values: no real values
+// X-band: a ≈ ?, b ≈ ?
+// C-band: a ≈ ?, b ≈ ?
 // Source: Hitschfeld & Bordan (1954), Bringi & Chandrasekar (2001)
-#define A_COEFF_X 3.8e-5
-#define B_COEFF_X 0.91
+#define A_COEFF_X 1.8e-5
+#define B_COEFF_X 0.85
 #define A_COEFF_C 1.5e-5
 #define B_COEFF_C 0.80
 

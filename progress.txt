@@ -54,7 +54,7 @@
 
 
 
-Next 5 tasks to prioritise (as of 2025-09-03 13:44:04):
+Next 5 tasks to prioritise (as of 2025-09-04 12:58:00):
   1.  implement quality metric on heights
   2.  correcting for bright band if melting layer height known
   3.  reconstructed VPR based on the measurement? 
