@@ -278,10 +278,10 @@ int fill_polar_box(Polar_box* polar_box, double time,
         return -1;
     }
 
-    if (cos(polar_box->other_angle) <= 0.0) {
+    if (cos(polar_box->other_angle*DEG2RAD) <= 0.0) {
     fprintf(stderr,
             "fill_polar_box: Unsupported elevation angle %.2f rad (cos<=0)\n",
-            polar_box->other_angle);
+            polar_box->other_angle*DEG2RAD);
     return -1;
 }
     double kea_and_radar = KEA + radar->z;
@@ -292,7 +292,7 @@ int fill_polar_box(Polar_box* polar_box, double time,
     double diff_x = centre->x - radar_point->x;
     double diff_y = centre->y - radar_point->y;
     double dist_s = sqrt(diff_x * diff_x + diff_y * diff_y);
-    double dist = sin(dist_s / kea_and_radar) * kea_and_radar / cos(polar_box->other_angle);
+    double dist = sin(dist_s / kea_and_radar) * kea_and_radar / cos(polar_box->other_angle*DEG2RAD);
     double radius_stratiform = raincell_get_radius_stratiform(raincell);
 
     polar_box->range_resolution = get_range_res_radar(radar);
@@ -307,8 +307,8 @@ int fill_polar_box(Polar_box* polar_box, double time,
     polar_box->radar_id = get_radar_id(radar);
 
     // Compute min/max gates and angles
-    polar_box->min_range_gate = floor((sin((fabs(dist_s - radius_stratiform))/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
-    polar_box->max_range_gate = ceil((sin((fabs(dist_s + radius_stratiform))/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle)) / polar_box->range_resolution);
+    polar_box->min_range_gate = floor((sin((fabs(dist_s - radius_stratiform))/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle*DEG2RAD)) / polar_box->range_resolution);
+    polar_box->max_range_gate = ceil((sin((fabs(dist_s + radius_stratiform))/kea_and_radar)*kea_and_radar/cos(polar_box->other_angle*DEG2RAD)) / polar_box->range_resolution);
 
 if (polar_box->min_range_gate > polar_box->max_range_gate) {
     int tmp = polar_box->min_range_gate;
@@ -440,9 +440,9 @@ if(p_box==NULL){printf("create_bounding+box_for_polar_plot\n You are trying to c
 	const Radar* found_radar = find_radar_by_id(p_box, radars, num_radars);
 
 double rmin = get_min_range_gate(p_box) * get_range_res_radar(found_radar);
-double curvature_correction_min = cos(p_box->other_angle + atan2(rmin*cos(p_box->other_angle),(KEA+rmin*sin(p_box->other_angle))));
+double curvature_correction_min = cos(p_box->other_angle*DEG2RAD + atan2(rmin*cos(p_box->other_angle*DEG2RAD),(KEA+rmin*sin(p_box->other_angle*DEG2RAD))));
 double rmax = get_max_range_gate(p_box) * get_range_res_radar(found_radar);
-double curvature_correction_max = cos(p_box->other_angle + atan2(rmax*cos(p_box->other_angle),(KEA+rmax*sin(p_box->other_angle))));
+double curvature_correction_max = cos(p_box->other_angle*DEG2RAD + atan2(rmax*cos(p_box->other_angle*DEG2RAD),(KEA+rmax*sin(p_box->other_angle*DEG2RAD))));
 double anglemin = get_min_angle(p_box) * DEG2RAD;
 double anglemax = get_max_angle(p_box) * DEG2RAD;
 double anglemid = (anglemin + anglemax) / 2;
@@ -515,14 +515,14 @@ Bounding_box* create_bounding_box_for_polar_box_EZ(const Polar_box* p_box) {
 
     double rmin = get_min_range_gate(p_box) * get_range_res_radar(found_radar);
     double curvature_correction_min = cos(
-        p_box->other_angle + atan2(rmin * cos(p_box->other_angle),
-                                   (KEA + rmin * sin(p_box->other_angle)))
+        p_box->other_angle*DEG2RAD + atan2(rmin * cos(p_box->other_angle*DEG2RAD),
+                                   (KEA + rmin * sin(p_box->other_angle*DEG2RAD)))
     );
 
     double rmax = get_max_range_gate(p_box) * get_range_res_radar(found_radar);
     double curvature_correction_max = cos(
-        p_box->other_angle + atan2(rmax * cos(p_box->other_angle),
-                                   (KEA + rmax * sin(p_box->other_angle)))
+        p_box->other_angle*DEG2RAD + atan2(rmax * cos(p_box->other_angle*DEG2RAD),
+                                   (KEA + rmax * sin(p_box->other_angle*DEG2RAD)))
     );
 
     double anglemin = get_min_angle(p_box) * DEG2RAD;
@@ -581,7 +581,7 @@ Bounding_box* create_bounding_box_for_polar_box_EZ(const Polar_box* p_box) {
 
 double calculate_height_of_beam_at_range(double range, double elevation, double height_of_radar){
 	double height_from_earth_centre = (KEA+height_of_radar);
-	double corrected_elevation = elevation + atan2(range*cos(elevation), KEA+range*sin(elevation));
+	double corrected_elevation = elevation*DEG2RAD + atan2(range*cos(elevation*DEG2RAD), KEA+range*sin(elevation*DEG2RAD));
 	return sqrt(range*range + height_from_earth_centre*height_from_earth_centre + 2*range*height_from_earth_centre*sin(corrected_elevation))-KEA;
 }
 
@@ -589,7 +589,7 @@ double calculate_height_of_beam_at_range(double range, double elevation, double 
 int sample_from_relative_location_in_raincell(double range, double angle, double elevation, const Point* radar_centre, const Point* spatial_centre, const Raincell* raincell) {
 
 	
-    double curvature_correction = cos(elevation + atan2(range*cos(elevation),(KEA+range*sin(elevation))));
+    double curvature_correction = cos(elevation*DEG2RAD + atan2(range*cos(elevation*DEG2RAD),(KEA+range*sin(elevation*DEG2RAD))));
     // 1. Convert polar to cartesian in radar coordinates
     double dx = range * curvature_correction * cos(angle*DEG2RAD);
     double dy = range * curvature_correction * sin(angle*DEG2RAD);
@@ -1096,10 +1096,10 @@ if(p_box==NULL){printf("create_bounding+box_for_polar_plot\n You are trying to c
 
 //double rmin = p_box->min_range_gate * p_box->range_resolution;
 double rmin = (p_box->min_range_gate * p_box->range_resolution);
-double curvature_correction_min = cos(p_box->other_angle + atan2(rmin*cos(p_box->other_angle),(KEA+rmin*sin(p_box->other_angle))));
+double curvature_correction_min = cos(p_box->other_angle*DEG2RAD + atan2(rmin*cos(p_box->other_angle*DEG2RAD),(KEA+rmin*sin(p_box->other_angle*DEG2RAD))));
 //double rmax = p_box->max_range_gate * p_box->range_resolution;
 double rmax = p_box->max_range_gate * p_box->range_resolution;
-double curvature_correction_max = cos(p_box->other_angle + atan2(rmax*cos(p_box->other_angle),(KEA+rmax*sin(p_box->other_angle))));
+double curvature_correction_max = cos(p_box->other_angle*DEG2RAD + atan2(rmax*cos(p_box->other_angle*DEG2RAD),(KEA+rmax*sin(p_box->other_angle*DEG2RAD))));
 double anglemin = p_box->min_angle * DEG2RAD;
 double anglemax = p_box->max_angle * DEG2RAD;
 double anglemid = (anglemin + anglemax) / 2;
