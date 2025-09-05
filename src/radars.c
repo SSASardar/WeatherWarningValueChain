@@ -1244,6 +1244,6 @@ double att = a * pow(Z_lin, b);
 //double att = k*Z_lin;
 if (isnan(att) || isinf(att)) return 0.0;   // Safe fallback
 
-    return att; // [dB/km]
+    return (att/radar->range_resolution*0.001); // [dB/km]
 }
 

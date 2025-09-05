@@ -114,6 +114,8 @@ bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box, int
 }
 */
 
+
+/*
 bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box,
                       int *range_idx, int *angle_idx) {
     double dx = p.x - c_x;
@@ -135,7 +137,7 @@ bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box,
 
     // Angular span covered by this polar box
     double span = box->num_angles * box->angular_resolution * DEG2RAD;
-/*
+// 
     // Difference relative to box min angle, wrapped
     double angle_diff = angle - min_angle;
     if (angle_diff < 0) angle_diff += 2 * M_PI;
@@ -143,7 +145,6 @@ bool getPolarBoxIndex(Point p, double c_x, double c_y, const Polar_box* box,
     // If angle is outside the actual span of the box, reject
     if (angle_diff > span)
         return false;
-*/
 
 double angle_diff = fmod(angle - min_angle + 2*M_PI, 2*M_PI);
 if (angle_diff > span) return false;
@@ -157,6 +158,62 @@ if (angle_diff > span) return false;
 
     // --- Angle index (rounded) ---
     *angle_idx = (int)floor(angle_diff / (box->angular_resolution * DEG2RAD));
+    if (*angle_idx < 0) *angle_idx = 0;
+    if (*angle_idx >= (int)box->num_angles) *angle_idx = box->num_angles - 1;
+
+    return true;
+}
+
+
+*/
+
+bool getPolarBoxIndex(Point p,
+                      double c_x,
+                      double c_y,
+                      const Polar_box *box,
+                      int *range_idx,
+                      int *angle_idx)
+{
+    if (!box || !range_idx || !angle_idx) return false;
+
+    const double eps = 1e-8; // small tolerance for floating point errors
+
+    // --- Vector from radar to point ---
+    double dx = p.x - c_x;
+    double dy = p.y - c_y;
+
+    // --- Slant range ---
+    double r = sqrt(dx*dx + dy*dy);
+
+    double r_min = box->min_range_gate * box->range_resolution;
+    double r_max = box->max_range_gate * box->range_resolution;
+
+    if (r < r_min - eps || r > r_max + eps)
+        return false;
+
+    // --- Angle in [0, 2π) ---
+    double angle = atan2(dy, dx);
+    if (angle < 0) angle += 2*M_PI;
+
+    double min_angle = box->min_angle * DEG2RAD;
+    if (min_angle < 0) min_angle += 2*M_PI;
+
+    double span = box->num_angles * box->angular_resolution * DEG2RAD;
+
+    // Difference relative to box min angle, wrapped
+    double angle_diff = angle - min_angle;
+    if (angle_diff < 0) angle_diff += 2*M_PI;
+
+    if (angle_diff < -eps || angle_diff > span + eps)
+        return false;
+
+    // --- Range index (round to nearest) ---
+    *range_idx = (int)((r - r_min) / box->range_resolution + 0.5);
+    if (*range_idx < 0) *range_idx = 0;
+    if (*range_idx >= (int)box->num_ranges) *range_idx = box->num_ranges - 1;
+
+    // --- Angle index (round to nearest) ---
+    *angle_idx = (int)(angle_diff / (box->angular_resolution * DEG2RAD) + 0.5);
     if (*angle_idx < 0) *angle_idx = 0;
     if (*angle_idx >= (int)box->num_angles) *angle_idx = box->num_angles - 1;
 
